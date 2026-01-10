@@ -23,7 +23,7 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <GuestLayout>
-            <Head title="Iniciar sesión | Apple Boss" />
+            <Head title="Iniciar sesión | Apple_Tech" />
 
             {/* CONTENEDOR PRINCIPAL */}
             <div className="
@@ -39,12 +39,12 @@ export default function Login({ status, canResetPassword }) {
 
                 {/* TEXTO CONTEXTO */}
                 <div className="absolute top-6 left-6 text-white/40 text-sm tracking-wide">
-                    Apple Boss · Sistema de Gestión
+                    Apple_Tech · Sistema de Gestión Técnica
                 </div>
 
                 {/* CARD LOGIN */}
                 <motion.div
-                    initial={{ opacity: 0, y: 24 }}
+                    initial={{ opacity: 0, y: 28 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, ease: 'easeOut' }}
                     className="
@@ -59,8 +59,16 @@ export default function Login({ status, canResetPassword }) {
                 >
                     {/* HEADER */}
                     <div className="mb-10 text-center">
+                        <div className="flex justify-center mb-4">
+                            <img
+                                src="/images/logo-appletech.jpeg"
+                                alt="Apple_Tech"
+                                className="h-14 w-14 rounded-xl object-cover shadow-lg"
+                            />
+                        </div>
+
                         <h1 className="text-3xl font-semibold tracking-wide text-white">
-                             Apple Boss
+                            Apple<span className="text-red-500">_Tech</span>
                         </h1>
                         <p className="mt-2 text-sm text-white/60">
                             Acceso al panel administrativo
@@ -170,7 +178,7 @@ export default function Login({ status, canResetPassword }) {
 
                     {/* FOOTER */}
                     <p className="mt-10 text-center text-xs text-white/40">
-                        © {new Date().getFullYear()} Apple Boss · Todos los derechos reservados
+                        © {new Date().getFullYear()} Apple_Tech · Todos los derechos reservados
                     </p>
                 </motion.div>
             </div>

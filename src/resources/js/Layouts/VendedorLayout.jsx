@@ -1,8 +1,8 @@
 import { Head, Link, usePage, router } from '@inertiajs/react';
 
 export default function VendedorLayout({ children }) {
-  const url = window.location.pathname;
   const { auth } = usePage().props;
+  const pathname = window.location.pathname;
 
   const handleLogout = () => {
     router.post(route('logout'));
@@ -10,105 +10,138 @@ export default function VendedorLayout({ children }) {
 
   return (
     <>
-      <Head title="Panel Vendedor" />
+      <Head title="Panel Vendedor | Apple Tech" />
+
+      {/* SB ADMIN ASSETS */}
       <link rel="stylesheet" href="/sbadmin/vendor/fontawesome-free/css/all.min.css" />
       <link rel="stylesheet" href="/sbadmin/css/sb-admin-2.min.css" />
+
       <script src="/sbadmin/vendor/jquery/jquery.min.js" defer></script>
       <script src="/sbadmin/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script>
       <script src="/sbadmin/js/sb-admin-2.min.js" defer></script>
 
-      <div id="wrapper">
-        {/* Sidebar */}
-        <ul className="navbar-nav bg-gradient-success sidebar sidebar-dark accordion" id="accordionSidebar">
-          <Link className="sidebar-brand d-flex align-items-center justify-content-center" href="/vendedor/dashboard">
+      {/* WRAPPER GENERAL */}
+      <div className="d-flex bg-gray-100" style={{ minHeight: '100vh' }}>
+
+        {/* SIDEBAR */}
+        <aside
+          className="bg-gradient-success sidebar sidebar-dark accordion position-fixed"
+          id="accordionSidebar"
+          style={{
+            width: '224px',
+            height: '100vh',
+            overflowY: 'auto',
+          }}
+        >
+          {/* LOGO */}
+          <Link
+            className="sidebar-brand d-flex align-items-center justify-content-center"
+            href="/vendedor/dashboard"
+          >
             <div className="sidebar-brand-icon">
               <i className="fas fa-store"></i>
             </div>
-            <div className="sidebar-brand-text mx-3">AppleBoss Vendedor</div>
+            <div className="sidebar-brand-text mx-3">AppleBoss</div>
           </Link>
 
           <hr className="sidebar-divider my-0" />
 
-          <li className="nav-item">
-            <Link className={`nav-link ${url.startsWith('/vendedor/dashboard') ? 'active' : ''}`} href="/vendedor/dashboard">
-              <i className="fas fa-chart-line"></i>
-              <span>Panel Principal</span>
-            </Link>
-          </li>
+          {[
+            {
+              href: '/vendedor/dashboard',
+              icon: 'fa-chart-line',
+              label: 'Panel Principal',
+            },
+            {
+              href: '/vendedor/productos',
+              icon: 'fa-box-open',
+              label: 'Ver Productos',
+            },
+            {
+              href: '/vendedor/ventas',
+              icon: 'fa-file-invoice-dollar',
+              label: 'Mis Ventas',
+              active: pathname.startsWith('/vendedor/ventas') && !pathname.includes('/create'),
+            },
+            {
+              href: '/vendedor/ventas/create',
+              icon: 'fa-receipt',
+              label: 'Registrar Venta',
+            },
+            {
+              href: '/vendedor/cotizaciones',
+              icon: 'fa-file-alt',
+              label: 'Mis Cotizaciones',
+            },
+            {
+              href: '/vendedor/servicios',
+              icon: 'fa-tools',
+              label: 'Servicio Técnico',
+            },
+            {
+              href: '/vendedor/clientes',
+              icon: 'fa-users',
+              label: 'Mis Clientes',
+            },
+          ].map(({ href, icon, label, active }) => (
+            <li className="nav-item" key={label}>
+              <Link
+                href={href}
+                className={`nav-link ${
+                  active || pathname.startsWith(href) ? 'active fw-bold' : ''
+                }`}
+              >
+                <i className={`fas ${icon} me-2`}></i>
+                <span>{label}</span>
+              </Link>
+            </li>
+          ))}
+        </aside>
 
-          <li className="nav-item">
-            <Link className={`nav-link ${url.startsWith('/vendedor/productos') ? 'active' : ''}`} href="/vendedor/productos">
-              <i className="fas fa-box-open"></i>
-              <span>Ver Productos</span>
-            </Link>
-          </li>
+        {/* CONTENT */}
+        <main
+          className="flex-grow-1 d-flex flex-column"
+          style={{
+            marginLeft: '224px',
+            minHeight: '100vh',
+          }}
+        >
+          {/* TOPBAR */}
+          <nav className="navbar navbar-expand navbar-light bg-white shadow-sm px-4">
+            <h6 className="font-weight-bold text-success mt-2 mb-0">
+              Panel del Vendedor
+            </h6>
 
-          <li className="nav-item">
-            <Link className={`nav-link ${url.startsWith('/vendedor/ventas') && !url.includes('/create') ? 'active' : ''}`} href="/vendedor/ventas">
-              <i className="fas fa-file-invoice-dollar"></i>
-              <span>Mis Ventas</span>
-            </Link>
-          </li>
+            <div className="ms-auto d-flex align-items-center gap-3">
+              <span className="text-dark small fw-bold">
+                {auth?.user?.name}
+              </span>
 
-          <li className="nav-item">
-            <Link className={`nav-link ${url.startsWith('/vendedor/ventas/create') ? 'active' : ''}`} href="/vendedor/ventas/create">
-              <i className="fas fa-receipt"></i>
-              <span>Registrar Venta</span>
-            </Link>
-          </li>
+              <button
+                className="btn btn-sm btn-danger shadow-sm"
+                onClick={handleLogout}
+              >
+                <i className="fas fa-sign-out-alt me-1"></i>
+                Cerrar Sesión
+              </button>
+            </div>
+          </nav>
 
-          <li className="nav-item">
-            <Link className={`nav-link ${url.startsWith('/vendedor/cotizaciones') ? 'active' : ''}`} href="/vendedor/cotizaciones">
-              <i className="fas fa-file-alt"></i>
-              <span>Mis Cotizaciones</span>
-            </Link>
-          </li>
-
-          <li className="nav-item">
-            <Link className={`nav-link ${url.startsWith('/vendedor/servicios') ? 'active' : ''}`} href="/vendedor/servicios">
-              <i className="fas fa-tools"></i>
-              <span>Servicio Técnico</span>
-            </Link>
-          </li>
-
-          <li className="nav-item">
-  <Link className={`nav-link ${url.startsWith('/vendedor/clientes') ? 'active' : ''}`} href="/vendedor/clientes">
-    <i className="fas fa-users"></i>
-    <span>Mis Clientes</span>
-  </Link>
-</li>
-
-        </ul>
-
-        {/* Content Wrapper */}
-        <div id="content-wrapper" className="d-flex flex-column">
-          <div id="content">
-            {/* Topbar */}
-            <nav className="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow d-flex justify-content-between px-3">
-              <h6 className="font-weight-bold text-success mt-2">Panel del Vendedor</h6>
-              <div>
-                <span className="me-3 text-dark small fw-bold">{auth?.user?.name}</span>
-                <button className="btn btn-sm btn-danger shadow-sm" onClick={handleLogout}>
-                  <i className="fas fa-sign-out-alt me-1"></i> Cerrar Sesión
-                </button>
-              </div>
-            </nav>
-
-            {/* Main Content */}
-            <div className="container-fluid">
+          {/* MAIN CONTENT (SCROLL AQUÍ) */}
+          <section
+            className="flex-grow-1"
+            style={{ overflowY: 'auto' }}
+          >
+            <div className="container-fluid py-4">
               {children}
             </div>
-          </div>
+          </section>
 
-          {/* Footer */}
-          <footer className="sticky-footer bg-white">
-            <div className="container my-auto">
-              <div className="text-center my-auto small">
-                <span>© AppleBoss 2025 - Todos los derechos reservados</span>
-              </div>
-            </div>
+          {/* FOOTER */}
+          <footer className="bg-white border-top py-3 text-center small">
+            © Apple Tech 2026 · Todos los derechos reservados
           </footer>
-        </div>
+        </main>
       </div>
     </>
   );

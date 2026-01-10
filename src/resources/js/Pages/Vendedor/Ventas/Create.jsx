@@ -1,10 +1,11 @@
-import VendedorLayout from '@/Layouts/VendedorLayout';
+import AdminLayout from '@/Layouts/VendedorLayout';
 import { Head, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import ModalPermutaComponent from '@/Components/ModalPermutaComponent';
 import { useForm } from '@inertiajs/react';
+import VendedorLayout from '@/Layouts/VendedorLayout';
 
 
 export default function Create({ celulares, computadoras, productosGenerales }) {
@@ -17,7 +18,6 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
     notas_adicionales: '',
     inicio_tarjeta: '',
     fin_tarjeta: '',
-    codigo_nota: '',
   });
 
   const form = data;
@@ -180,7 +180,7 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
                   if (nombre.length >= 2) {
                     try {
                       const res = await axios.get(
-                        route('admin.clientes.sugerencias', { term: nombre })
+                        route('vendedor.clientes.sugerencias', { term: nombre })
                       );
                       setSugerencias(res.data);
                       setMostrarSugerencias(true);
@@ -212,24 +212,6 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
-
-            {/* Código de nota (talonario) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Código de Nota (Talonario)
-              </label>
-              <input
-                type="text"
-                name="codigo_nota"
-                value={data.codigo_nota}
-                onChange={(e) => setData('codigo_nota', e.target.value)}
-                className={`input h-11 w-full ${errors.codigo_nota ? 'border-red-500' : ''}`}
-                placeholder="Ej: 0064"
-              />
-              {errors.codigo_nota && (
-                <p className="text-red-500 text-sm mt-1">{errors.codigo_nota}</p>
               )}
             </div>
 
@@ -423,6 +405,6 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
           <button className="btn btn-success px-8 py-2 text-lg" onClick={registrarVenta}>💾 Registrar Venta</button>
         </div>
       </div>
-    </VendedorLayout>
+    </VendedorLayout >
   );
 }

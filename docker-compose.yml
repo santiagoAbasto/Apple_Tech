@@ -1,11 +1,12 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: appleboss-app
+    container_name: appletech-app
+    restart: unless-stopped
     volumes:
       - ./src:/var/www/html:cached
       - ./src/docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
@@ -18,7 +19,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: appleboss-queue
+    container_name: appletech-queue
+    restart: unless-stopped
     depends_on:
       - db
     volumes:
@@ -28,20 +30,20 @@ services:
 
   db:
     image: postgres:15
-    container_name: appleboss-db
+    container_name: appletech-db
     restart: always
     environment:
-      POSTGRES_DB: appleboss
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: APPLEBOSSjulian2023
+      POSTGRES_DB: appletech
+      POSTGRES_USER: appletech_user
+      POSTGRES_PASSWORD: APPLETECH2026
     volumes:
-      - appleboss-laravel_db_data:/var/lib/postgresql/data
+      - appletech-laravel_db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"   # puerto cambiado para evitar choques
 
   node:
     image: node:18
-    container_name: appleboss-node
+    container_name: appletech-node
     working_dir: /var/www/html
     volumes:
       - ./src:/var/www/html
@@ -49,10 +51,10 @@ services:
 
   adminer:
     image: adminer
-    container_name: appleboss-adminer
+    container_name: appletech-adminer
     restart: always
     ports:
-      - "8080:8080"
+      - "8081:8080"
 
 volumes:
-  appleboss-laravel_db_data:
+  appletech-laravel_db_data:

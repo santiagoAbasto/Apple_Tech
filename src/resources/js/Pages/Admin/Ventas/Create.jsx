@@ -17,7 +17,6 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
     notas_adicionales: '',
     inicio_tarjeta: '',
     fin_tarjeta: '',
-    codigo_nota: '',
   });
 
   const form = data;
@@ -212,24 +211,6 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
-
-            {/* Código de nota (talonario) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Código de Nota (Talonario)
-              </label>
-              <input
-                type="text"
-                name="codigo_nota"
-                value={data.codigo_nota}
-                onChange={(e) => setData('codigo_nota', e.target.value)}
-                className={`input h-11 w-full ${errors.codigo_nota ? 'border-red-500' : ''}`}
-                placeholder="Ej: 0064"
-              />
-              {errors.codigo_nota && (
-                <p className="text-red-500 text-sm mt-1">{errors.codigo_nota}</p>
               )}
             </div>
 

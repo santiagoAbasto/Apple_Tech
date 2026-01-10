@@ -13,6 +13,11 @@ use App\Models\ProductoApple;
 use App\Models\Cliente;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\ServicioTecnico;
+use App\Services\GeneradorCodigos;
+use Illuminate\Support\Facades\DB;
+
+
 
 class VentaController extends Controller
 {
@@ -73,25 +78,29 @@ class VentaController extends Controller
         }
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nombre_cliente' => 'required|string',
-            'telefono_cliente' => 'nullable|string',
-            'codigo_nota' => 'required|string|max:10',
-            'tipo_venta' => 'required|in:producto,servicio_tecnico',
-            'es_permuta' => 'boolean',
-            'tipo_permuta' => 'nullable|in:celular,computadora,producto_general',
-            'metodo_pago' => 'required|in:efectivo,qr,tarjeta',
-            'items' => 'required|array|min:1',
-            'equipo' => 'required_if:tipo_venta,servicio_tecnico|string',
-            'detalle_servicio' => 'required_if:tipo_venta,servicio_tecnico|string',
-            'tecnico' => 'required_if:tipo_venta,servicio_tecnico|string',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'nombre_cliente' => 'required|string',
+        'telefono_cliente' => 'nullable|string',
+        'tipo_venta' => 'required|in:producto,servicio_tecnico',
+        'es_permuta' => 'boolean',
+        'tipo_permuta' => 'nullable|in:celular,computadora,producto_general',
+        'metodo_pago' => 'required|in:efectivo,qr,tarjeta',
+        'items' => 'required|array|min:1',
+        'equipo' => 'required_if:tipo_venta,servicio_tecnico|string',
+        'detalle_servicio' => 'required_if:tipo_venta,servicio_tecnico|string',
+        'tecnico' => 'required_if:tipo_venta,servicio_tecnico|string',
+    ]);
+
+    return DB::transaction(function () use ($request) {
 
         $permutaCosto = 0;
         $entregado = null;
 
+        /* ======================================================
+         * 1) PERMUTA (MISMAS VALIDACIONES COMPLETAS)
+         * ====================================================== */
         if ($request->es_permuta && $request->has('producto_entregado')) {
             $permutaData = $request->producto_entregado;
 
@@ -109,6 +118,7 @@ class VentaController extends Controller
                         'producto_entregado.precio_costo' => 'required|numeric',
                         'producto_entregado.precio_venta' => 'required|numeric',
                     ]);
+
                     $entregado = Celular::create(array_merge($permutaData, ['estado' => 'permuta']));
                     $entregado->refresh();
                     $permutaCosto = floatval($entregado->precio_costo);
@@ -127,6 +137,7 @@ class VentaController extends Controller
                         'producto_entregado.precio_costo' => 'required|numeric',
                         'producto_entregado.precio_venta' => 'required|numeric',
                     ]);
+
                     $entregado = Computadora::create(array_merge($permutaData, ['estado' => 'permuta']));
                     $entregado->refresh();
                     $permutaCosto = floatval($entregado->precio_costo);
@@ -141,6 +152,7 @@ class VentaController extends Controller
                         'producto_entregado.precio_costo' => 'required|numeric',
                         'producto_entregado.precio_venta' => 'required|numeric',
                     ]);
+
                     $entregado = ProductoGeneral::create(array_merge($permutaData, ['estado' => 'permuta']));
                     $entregado->refresh();
                     $permutaCosto = floatval($entregado->precio_costo);
@@ -148,7 +160,9 @@ class VentaController extends Controller
             }
         }
 
-        // Cálculos de totales
+        /* ======================================================
+         * 2) CÁLCULOS (IGUAL QUE TU CÓDIGO)
+         * ====================================================== */
         $subtotal = 0;
         $ganancia = 0;
         $aplicaPermuta = false;
@@ -156,15 +170,25 @@ class VentaController extends Controller
         foreach ($request->items as $item) {
             $subtotal += $item['subtotal'];
             $ganancia += ($item['subtotal'] - $item['precio_invertido']);
+
             if (in_array($item['tipo'], ['celular', 'computadora'])) {
                 $aplicaPermuta = true;
             }
         }
 
+        /* ======================================================
+         * 3) CÓDIGO CORRELATIVO VENTA (AT-V###)
+         * ====================================================== */
+        $codigoVenta = GeneradorCodigos::siguienteVenta();
+
+        /* ======================================================
+         * 4) CREAR VENTA (MISMO PAYLOAD + codigo_nota)
+         * ====================================================== */
         $venta = Venta::create([
+            'codigo_nota' => $codigoVenta, // ✅ NUEVO
+
             'nombre_cliente' => $request->nombre_cliente,
             'telefono_cliente' => $request->telefono_cliente,
-            'codigo_nota' => $request->codigo_nota,
             'tipo_venta' => $request->tipo_venta,
             'es_permuta' => $request->es_permuta,
             'tipo_permuta' => $request->tipo_permuta,
@@ -172,7 +196,10 @@ class VentaController extends Controller
             'precio_venta' => $request->precio_venta ?? 0,
             'descuento' => $request->descuento ?? 0,
             'subtotal' => $subtotal,
-            'ganancia_neta' => $subtotal - ($request->descuento ?? 0) - ($aplicaPermuta ? $permutaCosto : 0) - ($request->precio_invertido ?? 0),
+            'ganancia_neta' => $subtotal
+                - ($request->descuento ?? 0)
+                - ($aplicaPermuta ? $permutaCosto : 0)
+                - ($request->precio_invertido ?? 0),
             'valor_permuta' => $permutaCosto,
             'metodo_pago' => $request->metodo_pago,
             'tarjeta_inicio' => $request->tarjeta_inicio,
@@ -188,7 +215,9 @@ class VentaController extends Controller
             'fecha' => now('America/La_Paz'),
         ]);
 
-        // Crear los ítems vendidos
+        /* ======================================================
+         * 5) CREAR ITEMS (IGUAL)
+         * ====================================================== */
         foreach ($request->items as $item) {
             $venta->items()->create([
                 'tipo' => $item['tipo'],
@@ -201,14 +230,18 @@ class VentaController extends Controller
             ]);
         }
 
-        // Cambiar estado de productos a "vendido"
+        /* ======================================================
+         * 6) CAMBIAR ESTADO A VENDIDO (INCLUYE APPLE)
+         * ====================================================== */
         foreach ($request->items as $item) {
             $modelo = match ($item['tipo']) {
                 'celular' => Celular::class,
                 'computadora' => Computadora::class,
                 'producto_general' => ProductoGeneral::class,
+                'producto_apple' => ProductoApple::class,
                 default => null,
             };
+
             if ($modelo) {
                 $producto = $modelo::find($item['producto_id']);
                 if ($producto) {
@@ -218,10 +251,16 @@ class VentaController extends Controller
             }
         }
 
-        // Registrar también el servicio técnico si corresponde
+        /* ======================================================
+         * 7) SERVICIO TÉCNICO (USANDO GENERADOR AT-ST###)
+         * ====================================================== */
         if ($request->tipo_venta === 'servicio_tecnico') {
+
+            $codigoServicio = GeneradorCodigos::siguienteServicioTecnico();
+
             ServicioTecnico::create([
                 'venta_id' => $venta->id,
+                'codigo_nota' => $codigoServicio, // ✅ correlativo real
                 'cliente' => $request->nombre_cliente,
                 'telefono' => $request->telefono_cliente,
                 'equipo' => $request->equipo,
@@ -229,15 +268,17 @@ class VentaController extends Controller
                 'precio_costo' => $request->precio_invertido ?? 0,
                 'precio_venta' => $request->precio_venta ?? 0,
                 'tecnico' => $request->tecnico,
-                'codigo_nota' => $request->codigo_nota,
                 'fecha' => now('America/La_Paz'),
                 'user_id' => auth()->id(),
             ]);
         }
 
-        // Crear cliente si no existe
+        /* ======================================================
+         * 8) CREAR CLIENTE SI NO EXISTE (MISMA LÓGICA)
+         * ====================================================== */
         if ($venta->telefono_cliente) {
             $clienteExistente = Cliente::where('telefono', $venta->telefono_cliente)->first();
+
             if (!$clienteExistente) {
                 Cliente::create([
                     'user_id' => $venta->user_id,
@@ -253,7 +294,8 @@ class VentaController extends Controller
             'message' => 'Venta registrada con éxito',
             'venta_id' => $venta->id,
         ]);
-    }
+    });
+}
 
     public function boleta(Venta $venta)
     {

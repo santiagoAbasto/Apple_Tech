@@ -1,8 +1,9 @@
-import VendedorLayout from '@/Layouts/VendedorLayout';
+import AdminLayout from '@/Layouts/VendedorLayout';
 import { Head, Link } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { useState } from 'react';
 import axios from 'axios';
+import VendedorLayout from '@/Layouts/VendedorLayout';
 
 export default function Index({ ventas }) {
   const [codigoNota, setCodigoNota] = useState('');
@@ -25,66 +26,66 @@ export default function Index({ ventas }) {
 
 
   const itemsDesglosados = ventas.flatMap((venta) => {
-    if (venta.tipo_venta === 'servicio_tecnico') {
-      const precioVenta = parseFloat(venta.precio_venta || 0);
-      const descuento = parseFloat(venta.descuento || 0);
-      const capital = parseFloat(venta.precio_invertido || 0);
-      const permuta = 0;
-      const ganancia = precioVenta - descuento - permuta - capital;
+      if (venta.tipo_venta === 'servicio_tecnico') {
+        const precioVenta = parseFloat(venta.precio_venta || 0);
+        const descuento = parseFloat(venta.descuento || 0);
+        const capital = parseFloat(venta.precio_invertido || 0);
+        const permuta = 0;
+        const ganancia = precioVenta - descuento - permuta - capital;
 
-      return [{
-        cliente: venta.nombre_cliente,
-        producto: 'Servicio Técnico',
-        codigoNota: venta.codigo_nota,
-        id_venta: venta.id,
-        servicio_tecnico_id: venta.servicio_tecnico?.id ?? null,
-        tipo: 'servicio_tecnico', // ✅ corregido aquí
-        precioVenta,
-        descuento,
-        permuta,
-        capital,
-        precioFinal: precioVenta - descuento - permuta,
-        ganancia,
-        vendedor: venta.vendedor?.name || '—',
-        fecha: venta.created_at,
-      }];
-    }
+        return [{
+          cliente: venta.nombre_cliente,
+          producto: 'Servicio Técnico',
+          codigoNota: venta.servicio_tecnico?.codigo_nota ?? venta.codigo_nota, // ✅ CLAVE
+          id_venta: venta.id,
+          servicio_tecnico_id: venta.servicio_tecnico?.id ?? null,
+          tipo: 'servicio_tecnico',
+          precioVenta,
+          descuento,
+          permuta,
+          capital,
+          precioFinal: precioVenta - descuento - permuta,
+          ganancia,
+          vendedor: venta.vendedor?.name || '—',
+          fecha: venta.created_at,
+        }];
+      }
 
-    return venta.items.map((item) => {
-      const precioVenta = parseFloat(item.precio_venta || 0);
-      const descuento = parseFloat(item.descuento || 0);
-      const capital = parseFloat(item.precio_invertido || 0);
-      const permuta =
-        parseFloat(venta.entregado_celular?.precio_costo || 0) ||
-        parseFloat(venta.entregado_computadora?.precio_costo || 0) ||
-        parseFloat(venta.entregado_producto_general?.precio_costo || 0) ||
-        0;
+      return venta.items.map((item) => {
+        const precioVenta = parseFloat(item.precio_venta || 0);
+        const descuento = parseFloat(item.descuento || 0);
+        const capital = parseFloat(item.precio_invertido || 0);
+        const permuta =
+          parseFloat(venta.entregado_celular?.precio_costo || 0) ||
+          parseFloat(venta.entregado_computadora?.precio_costo || 0) ||
+          parseFloat(venta.entregado_producto_general?.precio_costo || 0) ||
+          0;
 
-      const ganancia = precioVenta - descuento - permuta - capital;
+        const ganancia = precioVenta - descuento - permuta - capital;
 
-      const nombre =
-        item.tipo === 'celular'
-          ? item.celular?.modelo || 'Celular'
-          : item.tipo === 'computadora'
-            ? item.computadora?.nombre || 'Computadora'
-            : item.producto_general?.nombre || 'Producto';
+        const nombre =
+          item.tipo === 'celular'
+            ? item.celular?.modelo || 'Celular'
+            : item.tipo === 'computadora'
+              ? item.computadora?.nombre || 'Computadora'
+              : item.producto_general?.nombre || 'Producto';
 
-      return {
-        cliente: venta.nombre_cliente,
-        producto: nombre,
-        codigoNota: venta.codigo_nota,
-        id_venta: venta.id,
-        precioVenta,
-        descuento,
-        permuta,
-        capital,
-        precioFinal: precioVenta - descuento - permuta,
-        ganancia,
-        vendedor: venta.vendedor?.name || '—',
-        fecha: venta.created_at,
-      };
+        return {
+          cliente: venta.nombre_cliente,
+          producto: nombre,
+          codigoNota: venta.codigo_nota,
+          id_venta: venta.id,
+          precioVenta,
+          descuento,
+          permuta,
+          capital,
+          precioFinal: precioVenta - descuento - permuta,
+          ganancia,
+          vendedor: venta.vendedor?.name || '—',
+          fecha: venta.created_at,
+        };
+      });
     });
-  });
   const gananciaTotal = itemsDesglosados.reduce(
     (total, item) => (item.ganancia > 0 ? total + item.ganancia : total),
     0
