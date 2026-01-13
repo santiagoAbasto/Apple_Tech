@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 export default function Welcome({ auth }) {
     return (
         <>
-            <Head title="Apple_Tech | Gestión Técnica Profesional" />
+            <Head title="Apple Technology | Gestión Técnica Profesional" />
 
             <div className="relative min-h-screen overflow-hidden bg-black text-white">
 
@@ -25,7 +25,7 @@ export default function Welcome({ auth }) {
                             className="h-10 w-10 rounded-xl object-cover shadow-lg"
                         />
                         <span className="text-xl font-bold tracking-wide">
-                            Apple<span className="text-red-500">_Tech</span>
+                            Apple<span className="text-red-500"> Technology</span>
                         </span>
                     </div>
 
@@ -73,7 +73,7 @@ export default function Welcome({ auth }) {
                         </h1>
 
                         <p className="mt-6 text-lg text-white/70 leading-relaxed">
-                            Apple_Tech centraliza ventas, inventario, servicios técnicos,
+                            Apple Technology centraliza ventas, inventario, servicios técnicos,
                             cotizaciones y reportes en una sola plataforma moderna,
                             segura y escalable.
                         </p>
@@ -162,7 +162,7 @@ export default function Welcome({ auth }) {
 
                 {/* FOOTER */}
                 <footer className="relative z-10 text-center py-6 text-white/40 text-sm">
-                    © {new Date().getFullYear()} Apple_Tech · Sistema de Gestión Técnica
+                    © {new Date().getFullYear()} Apple Technology · Sistema de Gestión Técnica
                 </footer>
             </div>
         </>

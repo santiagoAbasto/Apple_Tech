@@ -23,7 +23,7 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <GuestLayout>
-            <Head title="Iniciar sesión | Apple_Tech" />
+            <Head title="Iniciar sesión | Apple Technology" />
 
             {/* CONTENEDOR PRINCIPAL */}
             <div className="
@@ -39,7 +39,7 @@ export default function Login({ status, canResetPassword }) {
 
                 {/* TEXTO CONTEXTO */}
                 <div className="absolute top-6 left-6 text-white/40 text-sm tracking-wide">
-                    Apple_Tech · Sistema de Gestión Técnica
+                    Apple Technology · Sistema de Gestión Técnica
                 </div>
 
                 {/* CARD LOGIN */}
@@ -68,7 +68,7 @@ export default function Login({ status, canResetPassword }) {
                         </div>
 
                         <h1 className="text-3xl font-semibold tracking-wide text-white">
-                            Apple<span className="text-red-500">_Tech</span>
+                            Apple<span className="text-red-500"> Technology</span>
                         </h1>
                         <p className="mt-2 text-sm text-white/60">
                             Acceso al panel administrativo
@@ -178,7 +178,7 @@ export default function Login({ status, canResetPassword }) {
 
                     {/* FOOTER */}
                     <p className="mt-10 text-center text-xs text-white/40">
-                        © {new Date().getFullYear()} Apple_Tech · Todos los derechos reservados
+                        © {new Date().getFullYear()} Apple Technology · Todos los derechos reservados
                     </p>
                 </motion.div>
             </div>

@@ -5,6 +5,21 @@ import dayjs from 'dayjs';
 import { route } from 'ziggy-js';
 import axios from 'axios';
 
+/* ======================
+   UTILIDAD VISUAL
+====================== */
+const formatServiciosInline = (detalle) => {
+  try {
+    const items = JSON.parse(detalle);
+    if (!Array.isArray(items)) return '';
+    return items
+      .map(i => `${i.descripcion} Bs ${Number(i.precio).toLocaleString('es-BO')}`)
+      .join(' • ');
+  } catch {
+    return '';
+  }
+};
+
 export default function Index({ servicios = [], filtros = {} }) {
   const [fechaInicio, setFechaInicio] = useState(filtros.fecha_inicio || '');
   const [fechaFin, setFechaFin] = useState(filtros.fecha_fin || '');
@@ -24,7 +39,10 @@ export default function Index({ servicios = [], filtros = {} }) {
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
     });
-    window.open(route('vendedor.servicios.exportarFiltrado') + `?${params.toString()}`, '_blank');
+    window.open(
+      route('vendedor.servicios.exportarFiltrado') + `?${params.toString()}`,
+      '_blank'
+    );
   };
 
   const handleExportarResumen = () => {
@@ -32,178 +50,159 @@ export default function Index({ servicios = [], filtros = {} }) {
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
     });
-    window.open(route('vendedor.servicios.exportarResumen') + `?${params.toString()}`, '_blank');
+    window.open(
+      route('vendedor.servicios.exportarResumen') + `?${params.toString()}`,
+      '_blank'
+    );
   };
 
   const buscarServicio = async (e) => {
     e.preventDefault();
     if (!buscar.trim()) return;
 
-    try {
-      const response = await axios.get(route('vendedor.servicios.buscar'), {
-        params: { buscar: buscar.trim() },
-      });
-      setResultadosBusqueda(response.data.servicios);
-    } catch (error) {
-      console.error('Error al buscar servicio técnico:', error);
-      setResultadosBusqueda([]);
-    }
+    const res = await axios.get(route('vendedor.servicios.buscar'), {
+      params: { buscar: buscar.trim() },
+    });
+
+    setResultadosBusqueda(res.data.servicios || []);
   };
 
-  const serviciosMostrados = resultadosBusqueda.length > 0 ? resultadosBusqueda : servicios;
+  const serviciosMostrados =
+    resultadosBusqueda.length > 0 ? resultadosBusqueda : servicios;
 
   return (
     <VendedorLayout>
       <Head title="Mis Servicios Técnicos" />
 
+      {/* HEADER */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-green-600">Servicios Técnicos Registrados</h1>
-        <p className="text-sm text-gray-500">Consulta, filtra y exporta tus servicios realizados.</p>
+        <h1 className="text-2xl font-semibold text-slate-800">
+          Servicios Técnicos
+        </h1>
+        <p className="text-sm text-slate-500">
+          Registro y control de trabajos técnicos realizados
+        </p>
       </div>
 
-      {/* 🔍 Buscador */}
-      <div className="relative mb-6">
-        <form onSubmit={buscarServicio} className="flex items-center gap-2">
-          <input
-            type="text"
-            value={buscar}
-            onChange={(e) => setBuscar(e.target.value)}
-            placeholder="Buscar por código o nombre del cliente"
-            className="border px-3 py-2 rounded w-80"
-          />
-          <button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-            Buscar
-          </button>
-        </form>
+      {/* BUSCADOR */}
+      <form onSubmit={buscarServicio} className="flex gap-3 mb-6">
+        <input
+          type="text"
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+          placeholder="Buscar por cliente o código"
+          className="w-72 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+        />
+        <button className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm">
+          Buscar
+        </button>
+      </form>
 
-        {resultadosBusqueda.length > 0 && (
-          <div className="absolute z-50 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200 p-4 animate-fade-in">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              🔍 Resultados encontrados:
-            </h3>
-            <ul className="space-y-3">
-              {resultadosBusqueda.map((s) => (
-                <li
-                  key={s.id}
-                  className="flex justify-between items-center px-4 py-2 rounded-lg hover:bg-gray-50 transition"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-800 capitalize">{s.cliente}</p>
-                    <p className="text-xs text-gray-500 font-mono">
-                      Código: <span className="text-blue-600">{s.codigo_nota || '—'}</span>
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      window.open(route('vendedor.servicios.boleta', { servicio: s.id }), '_blank');
-                      setBuscar('');
-                      setResultadosBusqueda([]);
-                    }}
-                    className="px-3 py-1 text-sm rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 transition"
-                  >
-                    Ver Boleta
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* 📅 Filtros por fecha */}
+      {/* FILTROS */}
       <form
         onSubmit={handleFiltrar}
-        className="grid md:grid-cols-3 gap-4 items-end bg-white p-4 rounded-xl shadow mb-6"
+        className="grid md:grid-cols-4 gap-4 items-end bg-white p-4 rounded-xl shadow mb-6"
       >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">📅 Desde</label>
+          <label className="text-xs text-slate-500">Desde</label>
           <input
             type="date"
-            className="form-control w-full"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             value={fechaInicio}
             onChange={(e) => setFechaInicio(e.target.value)}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">📅 Hasta</label>
+          <label className="text-xs text-slate-500">Hasta</label>
           <input
             type="date"
-            className="form-control w-full"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
           />
         </div>
 
+        <button className="h-10 rounded-lg bg-slate-800 text-white text-sm">
+          Filtrar
+        </button>
+
         <div className="flex gap-2">
-          <button
-            type="submit"
-            className="btn btn-success w-full flex items-center justify-center gap-2 shadow-sm"
-          >
-            🔍 <span>Filtrar</span>
-          </button>
           <button
             type="button"
             onClick={handleExportar}
-            className="btn btn-outline-primary w-full flex items-center justify-center gap-2 shadow-sm"
+            className="w-full h-10 rounded-lg border border-blue-600 text-blue-600 text-sm"
           >
-            📤 <span>Boletas</span>
+            Boletas
           </button>
           <button
             type="button"
             onClick={handleExportarResumen}
-            className="btn btn-outline-success w-full flex items-center justify-center gap-2 shadow-sm"
+            className="w-full h-10 rounded-lg border border-green-600 text-green-600 text-sm"
           >
-            📄 <span>Resumen</span>
+            Resumen
           </button>
         </div>
       </form>
 
-      {/* 📋 Tabla de servicios */}
-      <div className="overflow-x-auto rounded-xl shadow border bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-green-600 text-white text-sm uppercase tracking-wide">
+      {/* TABLA */}
+      <div className="overflow-x-auto bg-white rounded-xl shadow border">
+        <table className="min-w-full text-sm">
+          <thead className="bg-slate-100 text-slate-700 uppercase text-xs">
             <tr>
               <th className="px-4 py-3 text-center">#</th>
               <th className="px-4 py-3 text-left">Cliente</th>
-              <th className="px-4 py-3 text-left">Teléfono</th>
-              <th className="px-4 py-3 text-left">Código Nota</th>
+              <th className="px-4 py-3 text-left">Código</th>
               <th className="px-4 py-3 text-left">Equipo</th>
-              <th className="px-4 py-3 text-left">Detalle</th>
-              <th className="px-4 py-3 text-left">Técnico</th>
+              <th className="px-4 py-3 text-left">Servicios</th>
               <th className="px-4 py-3 text-center">Fecha</th>
-              <th className="px-4 py-3 text-right">Precio Venta</th>
+              <th className="px-4 py-3 text-right">Total</th>
               <th className="px-4 py-3 text-center">Boleta</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+
+          <tbody className="divide-y">
             {serviciosMostrados.length === 0 ? (
               <tr>
-                <td colSpan="10" className="text-center py-6 text-gray-400 italic">
-                  No se encontraron servicios.
+                <td colSpan="8" className="text-center py-6 text-slate-400">
+                  No hay servicios registrados
                 </td>
               </tr>
             ) : (
-              serviciosMostrados.map((s, index) => (
-                <tr key={s.id} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
-                  <td className="px-4 py-2 text-center font-medium text-gray-600">{index + 1}</td>
+              serviciosMostrados.map((s, i) => (
+                <tr key={s.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-2 text-center">{i + 1}</td>
                   <td className="px-4 py-2">{s.cliente}</td>
-                  <td className="px-4 py-2">{s.telefono || '-'}</td>
-                  <td className="px-4 py-2 text-blue-700 font-mono">{s.codigo_nota || '—'}</td>
-                  <td className="px-4 py-2">{s.equipo}</td>
-                  <td className="px-4 py-2">{s.detalle_servicio}</td>
-                  <td className="px-4 py-2">{s.tecnico}</td>
-                  <td className="px-4 py-2 text-center">{dayjs(s.fecha).format('DD MMM YYYY')}</td>
-                  <td className="px-4 py-2 text-right font-semibold text-green-700">
-                    Bs {parseFloat(s.precio_venta).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
+                  <td className="px-4 py-2 font-mono text-blue-600">
+                    {s.codigo_nota}
                   </td>
+                  <td className="px-4 py-2">{s.equipo}</td>
+
+                  {/* 🔥 SERVICIOS LIMPIOS */}
+                  <td className="px-4 py-2 max-w-[420px]">
+                    <div
+                      className="truncate text-slate-700"
+                      title={formatServiciosInline(s.detalle_servicio)}
+                    >
+                      {formatServiciosInline(s.detalle_servicio)}
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-2 text-center">
+                    {dayjs(s.fecha).format('DD/MM/YYYY')}
+                  </td>
+
+                  <td className="px-4 py-2 text-right font-semibold text-green-600">
+                    Bs {Number(s.precio_venta).toLocaleString('es-BO')}
+                  </td>
+
                   <td className="px-4 py-2 text-center">
                     <a
                       href={route('vendedor.servicios.boleta', { servicio: s.id })}
                       target="_blank"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-blue-600 hover:underline"
                     >
-                      Ver Boleta
+                      Ver
                     </a>
                   </td>
                 </tr>

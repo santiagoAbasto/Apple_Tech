@@ -32,8 +32,6 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
   const [stocks, setStocks] = useState({ celulares: [], computadoras: [], productosGenerales: [], productosApple: [] });
   const [errores, setErrores] = useState({});
   const [items, setItems] = useState([]); // necesario para el manejo de los productos
-  const [sugerencias, setSugerencias] = useState([]); // si usás autocompletado
-  const [mostrarSugerencias, setMostrarSugerencias] = useState(false); // esta línea soluciona tu último error
 
   const fetchStock = async () => {
     const [c, comp, pg, apple] = await Promise.all([
@@ -48,6 +46,19 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
       productosGenerales: pg.data,
       productosApple: apple.data,
     });
+  };
+
+  const seleccionarProducto = (producto) => {
+    setProductoSeleccionado({
+      tipo: producto.tipo,
+      codigo: producto.codigo || producto.imei_1 || producto.numero_serie,
+      cantidad: 1,
+      descuento: 0,
+      imei: producto.imei_1 || '',
+      producto,
+    });
+
+    setMostrarProductos(false);
   };
 
   useEffect(() => { fetchStock(); }, []);
@@ -119,7 +130,7 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
     let total = 0;
     items.forEach((item) => {
       let subtotal = (item.precio_venta - item.descuento) * item.cantidad;
-      if (esPermuta && productoEntregado && (item.tipo === 'celular' || item.tipo === 'computadora')) {
+      if (esPermuta && productoEntregado) {
         subtotal -= productoEntregado.precio_costo;
       }
       total += subtotal;
@@ -128,6 +139,71 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
   };
 
   const total = calcularTotal();
+
+  // CLIENTES
+  const [sugerenciasClientes, setSugerenciasClientes] = useState([]);
+  const [mostrarClientes, setMostrarClientes] = useState(false);
+
+  // PRODUCTOS
+  const [sugerenciasProductos, setSugerenciasProductos] = useState([]);
+  const [mostrarProductos, setMostrarProductos] = useState(false);
+
+  const buscarSugerencias = (texto) => {
+    if (texto.length < 2) {
+      setMostrarProductos(false);
+      return;
+    }
+
+    // 🔴 SI NO HAY TIPO, NO BUSCAMOS
+    if (!productoSeleccionado.tipo) {
+      setMostrarProductos(false);
+      return;
+    }
+
+    const term = texto.toLowerCase();
+    const resultados = [];
+
+    if (productoSeleccionado.tipo === 'celular') {
+      stocks.celulares.forEach(p => {
+        if (
+          p.modelo?.toLowerCase().includes(term) ||
+          p.imei_1?.includes(term) ||
+          p.imei_2?.includes(term)
+        ) resultados.push({ ...p, tipo: 'celular' });
+      });
+    }
+
+    if (productoSeleccionado.tipo === 'computadora') {
+      stocks.computadoras.forEach(p => {
+        if (
+          p.modelo?.toLowerCase().includes(term) ||
+          p.numero_serie?.includes(term)
+        ) resultados.push({ ...p, tipo: 'computadora' });
+      });
+    }
+
+    if (productoSeleccionado.tipo === 'producto_general') {
+      stocks.productosGenerales.forEach(p => {
+        if (
+          p.nombre?.toLowerCase().includes(term) ||
+          p.codigo?.includes(term)
+        ) resultados.push({ ...p, tipo: 'producto_general' });
+      });
+    }
+
+    if (productoSeleccionado.tipo === 'producto_apple') {
+      stocks.productosApple.forEach(p => {
+        if (
+          p.modelo?.toLowerCase().includes(term) ||
+          p.imei_1?.includes(term) ||
+          p.numero_serie?.includes(term)
+        ) resultados.push({ ...p, tipo: 'producto_apple' });
+      });
+    }
+    setSugerenciasProductos(resultados.slice(0, 10));
+    setMostrarProductos(true);
+
+  };
 
   const registrarVenta = async () => {
     if (items.length === 0) return alert('Agrega al menos un producto.');
@@ -181,30 +257,30 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
                       const res = await axios.get(
                         route('admin.clientes.sugerencias', { term: nombre })
                       );
-                      setSugerencias(res.data);
-                      setMostrarSugerencias(true);
+                      setSugerenciasClientes(res.data);
+                      setMostrarClientes(true);
                     } catch (err) {
                       console.error('Error al obtener sugerencias:', err);
                     }
                   } else {
-                    setMostrarSugerencias(false);
+                    setMostrarClientes(false);
                   }
                 }}
-                onBlur={() => setTimeout(() => setMostrarSugerencias(false), 100)}
+                onBlur={() => setTimeout(() => setMostrarClientes(false), 100)}
                 onFocus={() => {
-                  if (sugerencias.length > 0) setMostrarSugerencias(true);
+                  if (sugerenciasClientes.length > 0) setMostrarClientes(true);
                 }}
               />
-              {mostrarSugerencias && sugerencias.length > 0 && (
+              {mostrarClientes && sugerenciasClientes.length > 0 && (
                 <ul className="absolute bg-white border rounded w-full z-10 max-h-40 overflow-y-auto shadow text-sm mt-1">
-                  {sugerencias.map((cliente) => (
+                  {sugerenciasClientes.map((cliente) => (
                     <li
                       key={cliente.id}
                       className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
                       onClick={() => {
                         setData('nombre_cliente', cliente.nombre);
                         setData('telefono_cliente', cliente.telefono);
-                        setMostrarSugerencias(false);
+                        setMostrarClientes(false);
                       }}
                     >
                       {cliente.nombre} — {cliente.telefono}
@@ -289,35 +365,105 @@ export default function Create({ celulares, computadoras, productosGenerales }) 
             <option value="producto_apple">Producto Apple</option>
           </select>
 
-          <input
-            className="input w-72"
-            placeholder="Código / IMEI / Serie"
-            value={productoSeleccionado.codigo}
-            onChange={(e) => {
-              const val = e.target.value;
-              setProductoSeleccionado((prev) => {
-                const producto = buscarProductoPorCodigo(prev.tipo, val);
-                return { ...prev, codigo: val, producto };
-              });
-            }}
-          />
+          <div className="relative">
+            <input
+              className="input w-80"
+              placeholder="Buscar por código, IMEI o nombre del producto"
+              value={productoSeleccionado.codigo}
+              onChange={(e) => {
+                const val = e.target.value;
+                setProductoSeleccionado(prev => ({ ...prev, codigo: val }));
+                buscarSugerencias(val);
+              }}
+            />
+
+            {mostrarProductos && sugerenciasProductos.length > 0 && (
+              <ul className="absolute z-20 bg-white border rounded w-full max-h-56 overflow-y-auto shadow text-sm mt-1">
+                {sugerenciasProductos.map((p, i) => (
+                  <li
+                    key={i}
+                    className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                    onClick={() => seleccionarProducto(p)}
+                  >
+                    <div className="font-semibold">
+                      {p.nombre || p.modelo}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {p.tipo?.toUpperCase() || '—'} — {p.codigo || p.imei_1 || p.numero_serie}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           {productoSeleccionado.producto && (
-            <>
-              <input type="number" className="input w-20" placeholder="Cantidad" min={1} value={productoSeleccionado.cantidad} onChange={(e) => setProductoSeleccionado({ ...productoSeleccionado, cantidad: Number(e.target.value) })} />
-              <input type="number" className="input w-24" placeholder="Descuento" min={0} value={productoSeleccionado.descuento} onChange={(e) => setProductoSeleccionado({ ...productoSeleccionado, descuento: Number(e.target.value) })} />
+            <div className="flex flex-wrap gap-2 items-end mt-3">
+              <input
+                type="number"
+                className="input w-20"
+                placeholder="Cantidad"
+                min={1}
+                value={productoSeleccionado.cantidad}
+                onChange={(e) =>
+                  setProductoSeleccionado({
+                    ...productoSeleccionado,
+                    cantidad: Number(e.target.value),
+                  })
+                }
+              />
+
+              <input
+                type="number"
+                className="input w-24"
+                placeholder="Descuento"
+                min={0}
+                value={productoSeleccionado.descuento}
+                onChange={(e) =>
+                  setProductoSeleccionado({
+                    ...productoSeleccionado,
+                    descuento: Number(e.target.value),
+                  })
+                }
+              />
+
               {productoSeleccionado.tipo === 'celular' && (
-                <input type="text" className="input w-56" placeholder="IMEI único" value={productoSeleccionado.imei} onChange={(e) => setProductoSeleccionado({ ...productoSeleccionado, imei: e.target.value })} />
+                <input
+                  type="text"
+                  className="input w-56"
+                  placeholder="IMEI único"
+                  value={productoSeleccionado.imei}
+                  onChange={(e) =>
+                    setProductoSeleccionado({
+                      ...productoSeleccionado,
+                      imei: e.target.value,
+                    })
+                  }
+                />
               )}
-              <button onClick={agregarItem} className="btn btn-primary">➕ Agregar</button>
-            </>
+
+              <button
+                type="button"
+                onClick={agregarItem}
+                className="btn btn-primary"
+              >
+                ➕ Agregar
+              </button>
+            </div>
+          )}
+
+          {productoSeleccionado.producto && (
+            <div className="mt-4 p-3 rounded border border-blue-300 bg-blue-50 text-blue-800 text-sm shadow-inner">
+              <strong>Producto encontrado:</strong>{' '}
+              {productoSeleccionado.producto.modelo ||
+                productoSeleccionado.producto.nombre}{' '}
+              — <strong>Precio:</strong> Bs{' '}
+              {productoSeleccionado.producto.precio_venta} —{' '}
+              <strong>Stock:</strong>{' '}
+              {productoSeleccionado.producto.stock ?? 1}
+            </div>
           )}
         </div>
-
-        {productoSeleccionado.producto && (
-          <div className="mt-4 p-3 rounded border border-blue-300 bg-blue-50 text-blue-800 text-sm shadow-inner">
-            <strong>Producto encontrado:</strong> {productoSeleccionado.producto.modelo || productoSeleccionado.producto.nombre} — <strong>Precio:</strong> Bs {productoSeleccionado.producto.precio_venta} — <strong>Stock:</strong> {productoSeleccionado.producto.stock ?? 1}
-          </div>
-        )}
       </div>
 
       {/* Sección: Permuta */}

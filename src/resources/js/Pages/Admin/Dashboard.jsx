@@ -6,9 +6,10 @@ import { route } from 'ziggy-js';
 
 import QuickDateFilter from '@/Components/QuickDateFilter';
 import EconomicCharts from '@/Components/EconomicCharts';
+import SalesChart from '@/Components/SalesChart';
 
 /* =======================
-   HELPERS GLOBALES
+   HELPERS GLOBALES (ÚNICOS)
 ======================= */
 const safeNum = (x) => {
   if (typeof x === 'number') return x;
@@ -27,12 +28,18 @@ const safeNum = (x) => {
 const fmtBs = (n) =>
   `Bs ${safeNum(n).toLocaleString('es-BO', { minimumFractionDigits: 2 })}`;
 
-/* 🔐 Total por tipo (blindado) */
+/* 🔐 NORMALIZADOR DEFINITIVO PARA TOTALES */
 const normalizeVentaTotal = (tipo, total) => {
   const t = String(tipo || '').toLowerCase();
-  return t === 'servicio_tecnico'
-    ? safeNum(total) / 100
-    : safeNum(total);
+  const n = safeNum(total);
+
+  // servicio técnico viene en centavos
+  if (t === 'servicio_tecnico') {
+    return n / 100;
+  }
+
+  // protección extra por si viene inflado
+  return n > 10000 ? n / 100 : n;
 };
 
 export default function Dashboard({
@@ -104,7 +111,7 @@ export default function Dashboard({
     <AdminLayout>
       <Head title="Panel de Administración | AppleBoss" />
 
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
       <div className="px-4 mb-8">
         <div className="bg-gradient-to-r from-sky-600 to-sky-800 text-white rounded-xl p-6 shadow-lg">
           <h1 className="text-3xl font-bold">
@@ -116,7 +123,7 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* ACCIONES */}
+      {/* ================= ACCIONES ================= */}
       <div className="flex flex-wrap gap-3 px-4 mb-10">
         <QuickButton routeName="admin.ventas.create" color="sky" text="➕ Venta" />
         <QuickButton routeName="admin.servicios.create" color="green" text="⚙️ Servicio" />
@@ -124,9 +131,11 @@ export default function Dashboard({
         <QuickButton routeName="admin.reportes.index" color="rose" text="📄 Reportes" />
       </div>
 
-      {/* TARJETAS (NO SE TOCAN 😤) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 mb-12">
+      {/* ================= TUS TARJETAS (INTOCABLES) ================= */}
+      {/* BLOQUE 1 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 mb-10">
         <Card titulo="Ventas Hoy" valor={fmtBs(resumen.ventas_hoy)} color="sky" />
+
         <Card
           titulo="Ganancia Neta (pre egresos)"
           valor={
@@ -136,11 +145,46 @@ export default function Dashboard({
           }
           color={safeNum(resumen_total.ganancia_neta) < 0 ? 'rose' : 'green'}
         />
+
         <Card titulo="Servicios Técnicos" valor={resumen.servicios || 0} color="indigo" />
-        <Card titulo="Cotizaciones" valor={resumen.cotizaciones || 0} color="rose" />
+        <Card titulo="Cotizaciones Enviadas" valor={resumen.cotizaciones || 0} color="rose" />
       </div>
 
-      {/* FILTROS */}
+      {/* BLOQUE 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 mb-12">
+        <Card titulo="Total Ventas (Precio final pagado)" valor={fmtBs(resumen_total.total_ventas)} color="sky" />
+        <Card
+          titulo="Inversión Total (Costo + Permuta)"
+          valor={fmtBs(safeNum(resumen_total.total_costo) + safeNum(resumen_total.total_permuta))}
+          color="indigo"
+        />
+        <Card titulo="Total Descuento" valor={fmtBs(resumen_total.total_descuento)} color="rose" />
+        <Card
+          titulo="Utilidad Disponible (ganancia - egresos)"
+          valor={
+            safeNum(resumen_total.utilidad_disponible) < 0
+              ? `Se invirtió ${fmtBs(Math.abs(safeNum(resumen_total.utilidad_disponible)))}`
+              : fmtBs(resumen_total.utilidad_disponible)
+          }
+          color={safeNum(resumen_total.utilidad_disponible) < 0 ? 'rose' : 'green'}
+        />
+      </div>
+
+      {/* BLOQUE 3 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 mb-10">
+        <Card
+          titulo="Productos Generales Disponibles"
+          valor={resumen.stock_detalle?.productos_generales || 0}
+          color="indigo"
+        />
+        <Card
+          titulo="% del Stock Total"
+          valor={`${resumen.stock_detalle?.porcentaje_productos_generales || 0}%`}
+          color="sky"
+        />
+      </div>
+
+      {/* ================= FILTROS ================= */}
       <QuickDateFilter vendedorId={vendedorId} />
 
       <form
@@ -189,26 +233,26 @@ export default function Dashboard({
         </button>
       </form>
 
-      {/* GRÁFICO ECONÓMICO (ÚNICO) */}
-      <div className="bg-white p-6 rounded-xl shadow-md mb-12 mx-4">
-        <h2 className="text-lg font-bold text-sky-800 mb-4">
-          📊 Distribución Económica
-        </h2>
+      {/* ================= GRÁFICOS (AMBOS) ================= */}
+      <div className="px-4 mb-14">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <div className="bg-white rounded-xl shadow p-6">
+            <EconomicCharts
+              resumen_total={resumen_total}
+              distribucion_economica={distribucion_economica}
+            />
+          </div>
 
-        <div className="flex justify-end font-semibold mb-4">
-          Utilidad real (post egresos):
-          <span className={`ml-2 ${utilidadPostEgresos < 0 ? 'text-rose-600' : 'text-green-600'}`}>
-            {fmtBs(utilidadPostEgresos)}
-          </span>
+          <div className="bg-white rounded-xl shadow p-6">
+            <SalesChart
+              distribucion_economica={distribucion_economica}
+              resumen_total={resumen_total}
+            />
+          </div>
         </div>
-
-        <EconomicCharts
-          resumen_total={resumen_total}
-          distribucion_economica={distribucion_economica}
-        />
       </div>
 
-      {/* ÚLTIMAS VENTAS */}
+      {/* ================= ÚLTIMAS 5 VENTAS (BUG CORREGIDO) ================= */}
       <div className="px-4 mb-12">
         <h2 className="text-lg font-semibold mb-3">🛒 Últimas 5 ventas</h2>
         <div className="overflow-auto bg-white rounded-xl shadow border">
@@ -255,7 +299,7 @@ function Card({ titulo, valor, color }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 text-center hover:shadow-lg transition">
+    <div className="bg-white shadow-md rounded-xl p-5 text-center hover:shadow-lg transition">
       <p className="text-sm text-gray-500 mb-1">{titulo}</p>
       <h2 className={`text-xl font-bold ${colors[color]}`}>{valor}</h2>
     </div>

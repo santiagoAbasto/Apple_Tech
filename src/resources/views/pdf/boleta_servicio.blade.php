@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+
   <style>
     @page {
       margin: 30px 28px;
@@ -14,174 +15,213 @@
       color: #1e1e1e;
     }
 
-    .brand img {
-      width: 130px;
-    }
-
-    .title-top {
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      color: #003366;
-      margin-top: -75px;
-    }
-
-    .header-wrap {
+    /* =====================
+       HEADER
+    ====================== */
+    .header {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
       border-bottom: 2px solid #003366;
-      margin-bottom: 10px;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
     }
 
-    .venta-info p {
-      font-size: 10px;
-      margin: 1px 0;
-      color: #333;
+    .brand img {
+      width: 120px;
     }
 
-    .section-title {
-      font-size: 12px;
+    .empresa-legal p {
+      margin: 2px 0;
+      font-size: 9.5px;
+    }
+
+    .boleta-info {
+      text-align: right;
+    }
+
+    .boleta-info .titulo {
+      font-size: 13px;
       font-weight: bold;
-      margin-top: 14px;
-      margin-bottom: 6px;
+      color: #003366;
+      margin-bottom: 4px;
+    }
+
+    /* =====================
+       SECCIONES
+    ====================== */
+    .section-title {
+      font-size: 11.5px;
+      font-weight: bold;
       color: #003366;
       border-bottom: 1px solid #003366;
       padding-bottom: 3px;
+      margin-top: 14px;
+      margin-bottom: 6px;
     }
 
     .info p {
-      margin: 1px 0;
+      margin: 2px 0;
     }
 
+    /* =====================
+       TABLAS
+    ====================== */
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 6px;
       font-size: 10px;
-      text-align: center;
     }
 
     th,
     td {
       border: 1px solid #d0dce7;
       padding: 6px;
-      vertical-align: middle;
+      text-align: center;
     }
 
     th {
       background-color: #e9f0fa;
       color: #003366;
+      font-weight: bold;
     }
 
-    .resumen-final {
-      margin-top: 20px;
-      font-size: 12px;
-      font-weight: bold;
+    td.text-left {
+      text-align: left;
+    }
+
+    /* =====================
+       RESUMEN
+    ====================== */
+    .resumen {
+      margin-top: 16px;
       text-align: right;
+      font-size: 13px;
+      font-weight: bold;
       color: #003366;
     }
 
-    .firmas {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      align-items: flex-start;
+    /* =====================
+       FIRMAS
+    ====================== */
+    .tabla-firmas {
+      width: 100%;
+      margin-top: 50px;
+      border-collapse: collapse;
     }
 
     .firma-box {
-      width: 48%;
+      border: 1px solid #cfcfcf;
+      height: 150px;
       text-align: center;
+      padding: 18px 10px;
     }
 
-    .firma-box img {
-      width: 120px;
-      margin-bottom: 8px;
+    .firma-img {
+      width: 160px;
+      margin-bottom: 12px;
     }
 
     .firma-line {
-      border-top: 1px solid #999;
-      margin-top: 40px;
-      margin-bottom: 4px;
+      border-top: 1px solid #777;
+      width: 80%;
+      margin: 6px auto;
     }
 
     .firma-text {
-      font-size: 10px;
-      color: #555;
+      font-size: 9.5px;
+      color: #444;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="brand">
-    <img src="{{ public_path('images/LOGO.png') }}" alt="Apple Boss">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <img src="{{ public_path('images/LOGO.png') }}" alt="Apple Boss">
+      <div class="empresa-legal">
+        <p><strong>NIT:</strong> 12555473014</p>
+        <p><strong>Contribuyente:</strong> Empresa Unipersonal</p>
+      </div>
+    </div>
+
+    <div class="boleta-info">
+      <div class="titulo">BOLETA DE SERVICIO TÉCNICO</div>
+      <p><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($servicio->fecha)->format('d/m/Y') }}</p>
+      <p><strong>Código Nota:</strong> {{ $servicio->codigo_nota ?? '—' }}</p>
+    </div>
   </div>
 
-  <h1 class="title-top">APPLE BOSS</h1>
+  <!-- DATOS CLIENTE -->
+  <div class="section-title">Datos del Cliente</div>
+  <div class="info">
+    <p><strong>Cliente:</strong> {{ strtoupper($servicio->cliente) }}</p>
+    <p><strong>Teléfono:</strong> {{ $servicio->telefono ?? '—' }}</p>
+    <p><strong>Equipo:</strong> {{ $servicio->equipo }}</p>
+    <p><strong>Técnico:</strong> {{ $servicio->tecnico }}</p>
+  </div>
 
-  <div class="header-wrap">
-    <div class="empresa-legal" style="font-size: 9.8px; color: #333;">
-      <p><strong>NIT:</strong> 12555473014</p>
-      <p><strong>Contribuyente:</strong> Empresa Unipersonal</p>
-    </div>
-    <div class="venta-info" style="text-align: right; padding-top: 5px;">
-      <div style="font-size: 11px; font-weight: bold; color: #003366; margin-bottom: 3px;">
-        BOLETA DE SERVICIO TÉCNICO
-      </div>
-      <div style="font-size: 10px; color: #333;">
-        <p style="margin: 0;">Fecha: {{ \Carbon\Carbon::parse($servicio->fecha)->format('d/m/Y') }}</p>
-        <p style="margin: 0;">Código Nota: {{ $servicio->codigo_nota ?? '—' }}</p>
-      </div>
-    </div>
+  <!-- DETALLE -->
+  <div class="section-title">Detalle del Servicio</div>
 
-
-    <div class="section-title">Datos del Cliente</div>
-    <div class="info">
-      <p><strong>Cliente:</strong> {{ strtoupper($servicio->cliente) }}</p>
-      <p><strong>Teléfono:</strong> {{ $servicio->telefono ?? '—' }}</p>
-    </div>
-
-    <div class="section-title">Detalle del Servicio</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Equipo</th>
-          <th>Servicio</th>
-          <th>Técnico</th>
-          <th>Registrado por</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ $servicio->equipo }}</td>
-          <td>{{ $servicio->detalle_servicio }}</td>
-          <td>{{ $servicio->tecnico }}</td>
-          <td>{{ $servicio->vendedor->name ?? '—' }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="resumen-final">
-      Total a pagar por el cliente: Bs {{ number_format($servicio->precio_venta, 2) }}
-    </div>
-
-    <table style="width: 100%; margin-top: 90px; font-size: 10.5px; text-align: center; border-collapse: collapse;">
+  <table>
+    <thead>
       <tr>
-        <td style="width: 50%; position: relative; height: 80px; padding: 0;">
-          <img src="{{ public_path('images/firma.png') }}" alt="Firma AppleBoss"
-            style="width: 150px; height: auto; position: absolute; top: 0px; left: 50%; transform: translateX(-50%); opacity: 0.95;">
+        <th style="width:5%">#</th>
+        <th style="width:70%">Servicio realizado</th>
+        <th style="width:25%">Precio (Bs)</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach ($servicios_cliente as $i => $item)
+      <tr>
+        <td>{{ $i + 1 }}</td>
+        <td class="text-left">{{ $item['descripcion'] }}</td>
+        <td>
+          Bs {{ number_format($item['precio'] ?? 0, 2) }}
         </td>
-        <td style="width: 50%; height: 80px;"></td>
+
       </tr>
-      <tr>
-        <td style="font-weight: bold; color: #003366; padding-top: 5px;">Firma autorizada - Apple Boss</td>
-        <td style="font-weight: bold; color: #003366; padding-top: 5px;">Firma del Cliente</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td style="font-size: 9px; color: #555; padding-top: 4px;">Conforme con la recepción del producto</td>
-      </tr>
-    </table>
+      @endforeach
+    </tbody>
+
+  </table>
+
+  <!-- TOTAL -->
+  <div class="resumen">
+    Total a pagar por el cliente: <br>
+    <span style="font-size:18px;">Bs {{ number_format($servicio->precio_venta, 2) }}</span>
+  </div>
+
+  <!-- FIRMAS -->
+  <table class="tabla-firmas">
+    <tr>
+      <td style="width:50%; padding-right:10px;">
+        <div class="firma-box">
+          <img src="{{ public_path('images/firma.png') }}" class="firma-img" alt="Firma Apple Boss">
+          <div class="firma-line"></div>
+          <div class="firma-text">
+            <strong>Firma autorizada</strong><br>
+            Apple Boss
+          </div>
+        </div>
+      </td>
+
+      <td style="width:50%; padding-left:10px;">
+        <div class="firma-box">
+          <div style="height:127px;"></div>
+          <div class="firma-line"></div>
+          <div class="firma-text">
+            <strong>Firma del Cliente</strong><br>
+            Conforme con la recepción del servicio
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
 
 </body>
 

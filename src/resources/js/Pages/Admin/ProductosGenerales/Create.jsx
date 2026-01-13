@@ -68,7 +68,7 @@ export default function CreateProductoGeneral() {
               <option value="accesorio">Accesorio</option>
               <option value="cargador_5w">Cargador 5W</option>
               <option value="cargador_20w">Cargador 20W</option>
-              <option value="otro">Otro</option>
+              <option value="otro">Otros / Repuestos en General</option>
             </select>
             {errors.tipo && <div className="text-red-600 text-sm mt-1">{errors.tipo}</div>}
           </div>
