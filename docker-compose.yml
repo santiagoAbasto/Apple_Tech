@@ -7,8 +7,10 @@ services:
       dockerfile: Dockerfile
     container_name: appletech-app
     restart: unless-stopped
+    environment:
+      TZ: America/La_Paz
     volumes:
-      - ./src:/var/www/html:cached
+      - ./src:/var/www/html
       - ./src/docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
     ports:
       - "8000:80"
@@ -21,11 +23,13 @@ services:
       dockerfile: Dockerfile
     container_name: appletech-queue
     restart: unless-stopped
+    environment:
+      TZ: America/La_Paz
+    volumes:
+      - ./src:/var/www/html
+      - ./src/docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
     depends_on:
       - db
-    volumes:
-      - ./src:/var/www/html:cached
-      - ./src/docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
     command: php artisan queue:work --tries=3 --timeout=90
 
   db:
@@ -36,10 +40,11 @@ services:
       POSTGRES_DB: appletech
       POSTGRES_USER: appletech_user
       POSTGRES_PASSWORD: APPLETECH2026
+      TZ: America/La_Paz
     volumes:
       - appletech-laravel_db_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"   # puerto cambiado para evitar choques
+      - "5433:5432"
 
   node:
     image: node:18

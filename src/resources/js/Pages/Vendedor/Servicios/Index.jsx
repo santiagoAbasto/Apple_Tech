@@ -1,212 +1,215 @@
-import VendedorLayout from '@/Layouts/VendedorLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { route } from 'ziggy-js';
 import axios from 'axios';
+import VendedorLayout from '@/Layouts/VendedorLayout';
 
-/* ======================
-   UTILIDAD VISUAL
-====================== */
-const formatServiciosInline = (detalle) => {
-  try {
-    const items = JSON.parse(detalle);
-    if (!Array.isArray(items)) return '';
-    return items
-      .map(i => `${i.descripcion} Bs ${Number(i.precio).toLocaleString('es-BO')}`)
-      .join(' • ');
-  } catch {
-    return '';
-  }
-};
-
-export default function Index({ servicios = [], filtros = {} }) {
+export default function ServiciosIndex({ servicios = [], filtros = {}, vendedores = [] }) {
   const [fechaInicio, setFechaInicio] = useState(filtros.fecha_inicio || '');
   const [fechaFin, setFechaFin] = useState(filtros.fecha_fin || '');
+  const [vendedorId, setVendedorId] = useState(filtros.vendedor_id || '');
   const [buscar, setBuscar] = useState('');
-  const [resultadosBusqueda, setResultadosBusqueda] = useState([]);
+  const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
+
 
   const handleFiltrar = (e) => {
     e.preventDefault();
     router.get(route('vendedor.servicios.index'), {
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
+      vendedor_id: vendedorId,
     });
   };
 
-  const handleExportar = () => {
-    const params = new URLSearchParams({
+  const handleExportarFiltrado = () => {
+    const queryParams = new URLSearchParams({
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
-    });
-    window.open(
-      route('vendedor.servicios.exportarFiltrado') + `?${params.toString()}`,
-      '_blank'
-    );
-  };
-
-  const handleExportarResumen = () => {
-    const params = new URLSearchParams({
-      fecha_inicio: fechaInicio,
-      fecha_fin: fechaFin,
-    });
-    window.open(
-      route('vendedor.servicios.exportarResumen') + `?${params.toString()}`,
-      '_blank'
-    );
+      vendedor_id: vendedorId,
+    }).toString();
+    window.open(route('vendedor.servicios.exportarFiltrado') + '?' + queryParams, '_blank');
   };
 
   const buscarServicio = async (e) => {
     e.preventDefault();
     if (!buscar.trim()) return;
 
-    const res = await axios.get(route('vendedor.servicios.buscar'), {
-      params: { buscar: buscar.trim() },
-    });
-
-    setResultadosBusqueda(res.data.servicios || []);
+    try {
+      const response = await axios.get(route('vendedor.servicios.index'), {
+        params: { buscar: buscar.trim() },
+      });
+      setResultadosBusqueda(response.data.servicios || []);
+    } catch (error) {
+      console.error('Error al buscar servicio técnico:', error);
+      setResultadosBusqueda([]);
+    }
   };
 
-  const serviciosMostrados =
-    resultadosBusqueda.length > 0 ? resultadosBusqueda : servicios;
+
+
+  const listaFinal = resultadosBusqueda !== null ? resultadosBusqueda : servicios;
 
   return (
     <VendedorLayout>
-      <Head title="Mis Servicios Técnicos" />
+      <Head title="Servicios Técnicos" />
 
-      {/* HEADER */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-800">
-          Servicios Técnicos
-        </h1>
-        <p className="text-sm text-slate-500">
-          Registro y control de trabajos técnicos realizados
-        </p>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">🧰 Servicios Técnicos</h1>
+        <div className="flex gap-3 mt-4 md:mt-0">
+          <Link
+            href={route('vendedor.servicios.create')}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition"
+          >
+            ➕ Registrar Servicio
+          </Link>
+          <button
+            onClick={handleExportarFiltrado}
+            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow transition"
+          >
+            🧾 Exportar PDF Filtrado
+          </button>
+        </div>
       </div>
 
-      {/* BUSCADOR */}
-      <form onSubmit={buscarServicio} className="flex gap-3 mb-6">
+      <form onSubmit={buscarServicio} className="flex items-center gap-2 mb-6">
         <input
           type="text"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
-          placeholder="Buscar por cliente o código"
-          className="w-72 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+          placeholder="Buscar por código o nombre del cliente"
+          className="border px-3 py-2 rounded w-80"
         />
-        <button className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm">
+        <button
+          type="submit"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        >
           Buscar
         </button>
       </form>
 
-      {/* FILTROS */}
       <form
         onSubmit={handleFiltrar}
-        className="grid md:grid-cols-4 gap-4 items-end bg-white p-4 rounded-xl shadow mb-6"
+        className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-md mb-6"
       >
         <div>
-          <label className="text-xs text-slate-500">Desde</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Inicio</label>
           <input
             type="date"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             value={fechaInicio}
             onChange={(e) => setFechaInicio(e.target.value)}
+            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
           />
         </div>
-
         <div>
-          <label className="text-xs text-slate-500">Hasta</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Fin</label>
           <input
             type="date"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
+            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
           />
         </div>
-
-        <button className="h-10 rounded-lg bg-slate-800 text-white text-sm">
-          Filtrar
-        </button>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleExportar}
-            className="w-full h-10 rounded-lg border border-blue-600 text-blue-600 text-sm"
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vendedor</label>
+          <select
+            value={vendedorId}
+            onChange={(e) => setVendedorId(e.target.value)}
+            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
           >
-            Boletas
-          </button>
+            <option value="">— Todos —</option>
+            {vendedores.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-end">
           <button
-            type="button"
-            onClick={handleExportarResumen}
-            className="w-full h-10 rounded-lg border border-green-600 text-green-600 text-sm"
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition"
           >
-            Resumen
+            🔎 Filtrar
           </button>
         </div>
       </form>
 
-      {/* TABLA */}
-      <div className="overflow-x-auto bg-white rounded-xl shadow border">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-100 text-slate-700 uppercase text-xs">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl overflow-x-auto">
+        <table className="w-full table-auto text-sm text-left text-gray-800 dark:text-gray-100">
+          <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase">
             <tr>
-              <th className="px-4 py-3 text-center">#</th>
-              <th className="px-4 py-3 text-left">Cliente</th>
-              <th className="px-4 py-3 text-left">Código</th>
-              <th className="px-4 py-3 text-left">Equipo</th>
-              <th className="px-4 py-3 text-left">Servicios</th>
-              <th className="px-4 py-3 text-center">Fecha</th>
-              <th className="px-4 py-3 text-right">Total</th>
-              <th className="px-4 py-3 text-center">Boleta</th>
+              <th className="px-4 py-3">Cliente</th>
+              <th className="px-4 py-3">Código Nota</th>
+              <th className="px-4 py-3">Equipo</th>
+              <th className="px-4 py-3">Técnico</th>
+              <th className="px-4 py-3 text-right">Costo</th>
+              <th className="px-4 py-3 text-right">Venta</th>
+              <th className="px-4 py-3 text-right">Ganancia</th>
+              <th className="px-4 py-3">Fecha</th>
+              <th className="px-4 py-3">Registrado por</th>
+              <th className="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
+          <tbody>
+            {listaFinal.length > 0 ? (
+              listaFinal.map((s) => {
+                const costo = parseFloat(s.precio_costo || 0);
+                const venta = parseFloat(s.precio_venta || 0);
+                const ganancia = venta - costo;
 
-          <tbody className="divide-y">
-            {serviciosMostrados.length === 0 ? (
+                return (
+                  <tr
+                    key={s.id}
+                    className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    <td className="px-4 py-3">{s.cliente}</td>
+                    <td className="px-4 py-3 text-blue-700 font-mono">{s.codigo_nota || '—'}</td>
+                    <td className="px-4 py-3">{s.equipo}</td>
+                    <td className="px-4 py-3">{s.tecnico}</td>
+                    <td className="px-4 py-3 text-right">{costo.toFixed(2)} Bs</td>
+                    <td className="px-4 py-3 text-right">{venta.toFixed(2)} Bs</td>
+                    <td className="px-4 py-3 text-right text-green-600 font-semibold">{ganancia.toFixed(2)} Bs</td>
+                    <td className="px-4 py-3">{dayjs(s.fecha).format('DD/MM/YYYY')}</td>
+                    <td className="px-4 py-3">{s.vendedor?.name || '—'}</td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+
+                        {/* VER NOTA A4 */}
+                        <a
+                          href={route('vendedor.servicios.boleta', { servicio: s.id })}
+                          target="_blank"
+                          className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                        >
+                          📄 Ver
+                        </a>
+
+                        {/* IMPRIMIR 80 MM */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.open(
+                              route('vendedor.servicios.recibo80mm', { servicio: s.id }),
+                              '_blank'
+                            )
+                          }
+                          className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                          title="Imprimir recibo térmico 80mm"
+                        >
+                          🖨️ Imprimir
+                        </button>
+
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
               <tr>
-                <td colSpan="8" className="text-center py-6 text-slate-400">
-                  No hay servicios registrados
+                <td colSpan="10" className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                  No hay servicios registrados.
                 </td>
               </tr>
-            ) : (
-              serviciosMostrados.map((s, i) => (
-                <tr key={s.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-2 text-center">{i + 1}</td>
-                  <td className="px-4 py-2">{s.cliente}</td>
-                  <td className="px-4 py-2 font-mono text-blue-600">
-                    {s.codigo_nota}
-                  </td>
-                  <td className="px-4 py-2">{s.equipo}</td>
-
-                  {/* 🔥 SERVICIOS LIMPIOS */}
-                  <td className="px-4 py-2 max-w-[420px]">
-                    <div
-                      className="truncate text-slate-700"
-                      title={formatServiciosInline(s.detalle_servicio)}
-                    >
-                      {formatServiciosInline(s.detalle_servicio)}
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-2 text-center">
-                    {dayjs(s.fecha).format('DD/MM/YYYY')}
-                  </td>
-
-                  <td className="px-4 py-2 text-right font-semibold text-green-600">
-                    Bs {Number(s.precio_venta).toLocaleString('es-BO')}
-                  </td>
-
-                  <td className="px-4 py-2 text-center">
-                    <a
-                      href={route('vendedor.servicios.boleta', { servicio: s.id })}
-                      target="_blank"
-                      className="text-blue-600 hover:underline"
-                    >
-                      Ver
-                    </a>
-                  </td>
-                </tr>
-              ))
             )}
           </tbody>
         </table>

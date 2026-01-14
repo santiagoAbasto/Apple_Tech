@@ -147,7 +147,7 @@ export default function Welcome({ auth }) {
                             Digitalizá tu negocio hoy
                         </h2>
                         <p className="mt-4 text-white/70 max-w-xl mx-auto">
-                            Apple_Tech está diseñado para crecer contigo y adaptarse
+                            Apple Technology está diseñado para crecer contigo y adaptarse
                             a la realidad de tu negocio técnico.
                         </p>
 

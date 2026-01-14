@@ -39,7 +39,7 @@
     .resumen-final .label { color: #000; font-weight: bold; margin-right: 10px; }
     .resumen-final .value { color: #dc3545; }
     .firma {
-      margin-top: 50px;
+      margin-top: 55px;
       text-align: center;
     }
     .firma img {
@@ -47,18 +47,26 @@
       margin-bottom: 10px;
     }
     .firma p {
-      font-size: 14px;
-      margin: 0;
-      line-height: 1.3;
+      font-size: 13px;
+      margin: 2px 0;
+      line-height: 1.4;
+    }
+    .firma .cargo {
+      font-size: 12px;
+      color: #555;
+    }
+    .firma .contacto {
+      font-size: 11px;
+      color: #444;
     }
   </style>
 </head>
 <body>
 
 <header>
-  <img src="{{ public_path('images/logo.png') }}" alt="Apple Boss Logo">
+  <img src="{{ public_path('images/logo-appletech.jpeg') }}" alt="Apple Technology Logo">
   <h1>REPORTE DE EGRESOS</h1>
-  <p class="subtitulo">Apple Boss · Gastos y Administración</p>
+  <p class="subtitulo">Apple Technology · Gastos y Administración</p>
 </header>
 
 <div class="fecha-reporte">
@@ -107,13 +115,25 @@
 <div class="divider"></div>
 
 <div class="resumen-final">
-  <div><span class="label">Total Gastado:</span> <span class="value">{{ number_format($total, 2) }} Bs</span></div>
+  <div>
+    <span class="label">Total Gastado:</span>
+    <span class="value">{{ number_format($total, 2) }} Bs</span>
+  </div>
 </div>
 
+<!-- FIRMA GERENTE -->
 <div class="firma">
   <p>Firma autorizada:</p>
-  <img src="{{ public_path('images/firma.png') }}" alt="Firma Gerente">
-  <p><strong>Santiago Abasto</strong><br>Gerente General · Apple Boss</p>
+  <img src="{{ public_path('images/firma.png') }}" alt="Firma Gerente General">
+
+  <p><strong>Edson Torrez Huallpa</strong></p>
+  <p class="cargo">Gerente General · Apple Technology</p>
+
+  <p class="contacto">
+    +591 77 411 048<br>
+    Av. Gualberto Villarroel, entre Av. América y Calle Buenos Aires<br>
+    Cochabamba – Bolivia
+  </p>
 </div>
 
 </body>

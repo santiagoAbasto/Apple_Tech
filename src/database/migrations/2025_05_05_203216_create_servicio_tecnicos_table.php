@@ -24,6 +24,9 @@ return new class extends Migration
             $table->string('equipo');
             $table->text('detalle_servicio');
 
+            // 📝 Notas adicionales (visible en boleta)
+            $table->text('notas_adicionales')->nullable();
+
             // Costos
             $table->decimal('precio_costo', 10, 2)->default(0);
             $table->decimal('precio_venta', 10, 2)->default(0);

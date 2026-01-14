@@ -11,7 +11,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
   const [vendedorId, setVendedorId] = useState(filtros.vendedor_id || '');
   const [buscar, setBuscar] = useState('');
   const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
-  
+
 
   const handleFiltrar = (e) => {
     e.preventDefault();
@@ -46,7 +46,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
     }
   };
 
-  
+
 
   const listaFinal = resultadosBusqueda !== null ? resultadosBusqueda : servicios;
 
@@ -148,7 +148,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
               <th className="px-4 py-3 text-right">Ganancia</th>
               <th className="px-4 py-3">Fecha</th>
               <th className="px-4 py-3">Registrado por</th>
-              <th className="px-4 py-3 text-center">Nota</th>
+              <th className="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -173,13 +173,33 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                     <td className="px-4 py-3">{dayjs(s.fecha).format('DD/MM/YYYY')}</td>
                     <td className="px-4 py-3">{s.vendedor?.name || '—'}</td>
                     <td className="px-4 py-3 text-center">
-                      <a
-                        href={route('admin.servicios.boleta', { servicio: s.id })}
-                        target="_blank"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        Ver Nota de Servicio
-                      </a>
+                      <div className="flex items-center justify-center gap-2">
+
+                        {/* VER NOTA A4 */}
+                        <a
+                          href={route('admin.servicios.boleta', { servicio: s.id })}
+                          target="_blank"
+                          className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                        >
+                          📄 Ver
+                        </a>
+
+                        {/* IMPRIMIR 80 MM */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.open(
+                              route('admin.servicios.recibo80mm', { servicio: s.id }),
+                              '_blank'
+                            )
+                          }
+                          className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                          title="Imprimir recibo térmico 80mm"
+                        >
+                          🖨️ Imprimir
+                        </button>
+
+                      </div>
                     </td>
                   </tr>
                 );

@@ -31,19 +31,20 @@ export default function CreateServicio() {
     tecnico: '',
     fecha: new Date().toISOString().split('T')[0],
     detalle_servicio: '',
+    notas_adicionales: '',
     precio_costo: 0,
     precio_venta: 0,
   });
 
   /* ======================
-     SERVICIOS (JSON REAL)
+     SERVICIOS (ESTRUCTURA REAL)
   ====================== */
   const [servicios, setServicios] = useState([
     { descripcion: '', costo: '', precio: '' },
   ]);
 
   /* ======================
-     CLIENTES
+     CLIENTES (AUTOCOMPLETE)
   ====================== */
   const [sugerencias, setSugerencias] = useState([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
@@ -55,6 +56,7 @@ export default function CreateServicio() {
     const res = await axios.get(
       route('admin.clientes.sugerencias', { q: valor })
     );
+
     setSugerencias(res.data);
     setMostrarSugerencias(true);
   };
@@ -69,10 +71,13 @@ export default function CreateServicio() {
   };
 
   /* ======================
-     SERVICIOS
+     SERVICIOS CRUD
   ====================== */
   const agregarServicio = () =>
-    setServicios((prev) => [...prev, { descripcion: '', costo: '', precio: '' }]);
+    setServicios((prev) => [
+      ...prev,
+      { descripcion: '', costo: '', precio: '' },
+    ]);
 
   const actualizarServicio = (i, campo, valor) =>
     setServicios((prev) =>
@@ -83,7 +88,7 @@ export default function CreateServicio() {
     setServicios((prev) => prev.filter((_, idx) => idx !== i));
 
   /* ======================
-     TOTALES
+     TOTALES REALES
   ====================== */
   const totalCosto = servicios.reduce(
     (sum, s) => sum + Number(s.costo || 0),
@@ -96,17 +101,30 @@ export default function CreateServicio() {
   );
 
   /* ======================
-     SUBMIT
+     SUBMIT (JSON LIMPIO)
   ====================== */
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // 🔥 JSON DEFINITIVO
-    const detalleJSON = servicios.map((s) => ({
+    const serviciosValidos = servicios.filter(
+      (s) =>
+        s.descripcion &&
+        Number(s.costo) >= 0 &&
+        Number(s.precio) >= 0
+    );
+
+    if (serviciosValidos.length === 0) {
+      alert('Debe registrar al menos un servicio válido');
+      return;
+    }
+
+    const detalleJSON = serviciosValidos.map((s) => ({
       descripcion: s.descripcion,
+      costo: Number(s.costo),   // 🔴 ESTE ERA EL DATO QUE SE PERDÍA
       precio: Number(s.precio),
     }));
 
+    // ✅ PRIMERO setData
     setData((prev) => ({
       ...prev,
       detalle_servicio: JSON.stringify(detalleJSON),
@@ -114,8 +132,10 @@ export default function CreateServicio() {
       precio_venta: totalVenta,
     }));
 
+    // ✅ LUEGO post SIN payload
     post(route('admin.servicios.store'));
   };
+
 
   return (
     <AdminLayout>
@@ -223,6 +243,7 @@ export default function CreateServicio() {
                     </label>
                     <input
                       type="number"
+                      min="0"
                       value={s.costo}
                       onChange={(e) =>
                         actualizarServicio(i, 'costo', e.target.value)
@@ -237,6 +258,7 @@ export default function CreateServicio() {
                     </label>
                     <input
                       type="number"
+                      min="0"
                       value={s.precio}
                       onChange={(e) =>
                         actualizarServicio(i, 'precio', e.target.value)
@@ -259,11 +281,33 @@ export default function CreateServicio() {
             </div>
           </section>
 
+          {/* NOTAS */}
+          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-blue-400 mb-3">
+              Notas adicionales
+            </h2>
+            <textarea
+              rows={3}
+              value={data.notas_adicionales}
+              onChange={(e) => setData('notas_adicionales', e.target.value)}
+              placeholder="Observaciones, condiciones, recomendaciones..."
+              className={inputStyle}
+            />
+          </section>
+
           {/* FOOTER */}
           <div className="flex justify-between items-center">
             <div className="text-sm text-slate-300">
-              <p>Costo total: <strong>Bs {totalCosto.toFixed(2)}</strong></p>
-              <p>Cliente paga: <strong className="text-green-400">Bs {totalVenta.toFixed(2)}</strong></p>
+              <p>
+                Costo total:{' '}
+                <strong>Bs {totalCosto.toFixed(2)}</strong>
+              </p>
+              <p>
+                Cliente paga:{' '}
+                <strong className="text-green-400">
+                  Bs {totalVenta.toFixed(2)}
+                </strong>
+              </p>
             </div>
 
             <button
@@ -271,7 +315,7 @@ export default function CreateServicio() {
               disabled={processing}
               className={`${btnBase} px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm shadow-md`}
             >
-              {processing ? 'Guardando...' : 'Guardar Servicio'} →
+              {processing ? 'Guardando…' : 'Guardar Servicio'} →
             </button>
           </div>
         </form>

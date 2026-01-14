@@ -5,166 +5,155 @@
     <title>Resumen de Servicios Técnicos</title>
 
     <style>
+        @page { margin: 30px; }
+
         body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
-            margin: 30px;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 10px;
             color: #222;
         }
 
-        .brand {
+        .header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .brand img {
-            height: 80px;
-        }
-
-        .title-top {
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #003366;
+        .header img {
+            height: 65px;
             margin-bottom: 6px;
         }
 
+        .title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #003366;
+        }
+
         .subtitle {
-            text-align: center;
-            font-size: 14px;
+            font-size: 11px;
             color: #555;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            font-size: 9px;
         }
 
-        table thead {
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px;
+        }
+
+        thead {
             background-color: #003366;
-            color: white;
+            color: #fff;
         }
 
-        table th,
-        table td {
-            border: 1px solid #ccc;
-            padding: 6px 8px;
-            text-align: left;
+        th {
+            text-transform: uppercase;
+            font-size: 8.5px;
         }
 
-        .summary-table {
-            margin-top: 40px;
-            font-size: 12px;
-            width: 60%;
-            margin-left: auto;
-            margin-right: auto;
-            border: 1px solid #ccc;
+        .text-right {
+            text-align: right;
         }
 
-        .summary-table td {
-            padding: 8px;
-            border: 1px solid #ccc;
-        }
-
-        .summary-table .label {
-            font-weight: bold;
-            color: #003366;
-        }
-
-        .firma-container {
-            margin-top: 60px;
-            text-align: center;
+        .resumen {
+            margin-top: 20px;
+            width: 45%;
+            float: right;
             font-size: 10px;
         }
 
-        .firma-container img {
-            height: 60px;
+        .resumen td {
+            padding: 6px;
+            border: 1px solid #ccc;
         }
 
-        .firma-label {
-            margin-top: 4px;
-            color: #003366;
+        .label {
             font-weight: bold;
+            color: #003366;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="brand">
-        <img src="{{ public_path('images/LOGO.png') }}" alt="Apple Boss">
+    <div class="header">
+        <img src="{{ public_path('images/logo-appletech.jpeg') }}">
+        <div class="title">APPLE TECHNOLOGY</div>
+        <div class="subtitle">Resumen de Servicios Técnicos</div>
     </div>
-
-    <div class="title-top">APPLE BOSS</div>
-    <div class="subtitle">Resumen de Servicios Técnicos</div>
 
     <table>
         <thead>
             <tr>
-                <th>Código Nota</th>
+                <th>Código</th>
                 <th>Cliente</th>
                 <th>Equipo</th>
                 <th>Servicio</th>
                 <th>Técnico</th>
-                <th>Registrado por</th>
-                <th>Costo</th>
-                <th>Venta</th>
+                <th>Vendedor</th>
+                <th class="text-right">Costo (Bs)</th>
+                <th class="text-right">Cobro (Bs)</th>
                 <th>Fecha</th>
             </tr>
         </thead>
-
         <tbody>
-        @php
-            $totalCosto = 0;
-            $totalVenta = 0;
-        @endphp
-
-        @foreach ($filas as $fila)
             @php
-                $totalCosto += $fila['costo'];
-                $totalVenta += $fila['venta'];
+                $totalCosto = 0.0;
+                $totalVenta = 0.0;
             @endphp
 
-            <tr>
-                <td>{{ $fila['codigo_nota'] }}</td>
-                <td>{{ ucfirst($fila['cliente']) }}</td>
-                <td>{{ $fila['equipo'] }}</td>
-                <td>{{ ucfirst($fila['servicio']) }}</td>
-                <td>{{ $fila['tecnico'] }}</td>
-                <td>{{ $fila['vendedor'] }}</td>
-                <td>{{ number_format($fila['costo'], 2) }} Bs</td>
-                <td>{{ number_format($fila['venta'], 2) }} Bs</td>
-                <td>{{ \Carbon\Carbon::parse($fila['fecha'])->format('d/m/Y') }}</td>
-            </tr>
-        @endforeach
+            @forelse ($filas as $fila)
+                @php
+                    $costo = (float) ($fila['costo'] ?? 0);
+                    $venta = (float) ($fila['venta'] ?? 0);
+
+                    $totalCosto += $costo;
+                    $totalVenta += $venta;
+                @endphp
+                <tr>
+                    <td>{{ $fila['codigo_nota'] }}</td>
+                    <td>{{ $fila['cliente'] }}</td>
+                    <td>{{ $fila['equipo'] }}</td>
+                    <td>{{ strtoupper($fila['servicio']) }}</td>
+                    <td>{{ $fila['tecnico'] }}</td>
+                    <td>{{ $fila['vendedor'] }}</td>
+                    <td class="text-right">{{ number_format($costo, 2) }}</td>
+                    <td class="text-right">{{ number_format($venta, 2) }}</td>
+                    <td>{{ \Carbon\Carbon::parse($fila['fecha'])->format('d/m/Y') }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="9" style="text-align:center;">
+                        No existen registros
+                    </td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 
-    <table class="summary-table">
+    <table class="resumen">
         <tr>
-            <td class="label">📦 Total Costo Invertido:</td>
-            <td>{{ number_format($totalCosto, 2) }} Bs</td>
+            <td class="label">Total Costo</td>
+            <td class="text-right">{{ number_format($totalCosto, 2) }} Bs</td>
         </tr>
         <tr>
-            <td class="label">💰 Total Ingresos por Ventas:</td>
-            <td>{{ number_format($totalVenta, 2) }} Bs</td>
+            <td class="label">Total Cobrado</td>
+            <td class="text-right">{{ number_format($totalVenta, 2) }} Bs</td>
         </tr>
         <tr>
-            <td class="label">📈 Ganancia Neta:</td>
-            <td>
-                <strong style="color: {{ ($totalVenta - $totalCosto) >= 0 ? 'green' : 'red' }}">
+            <td class="label">Ganancia Neta</td>
+            <td class="text-right">
+                <strong style="color: {{ ($totalVenta - $totalCosto) >= 0 ? '#198754' : '#dc3545' }}">
                     {{ number_format($totalVenta - $totalCosto, 2) }} Bs
                 </strong>
             </td>
         </tr>
     </table>
-
-    <div class="firma-container">
-        <img src="{{ public_path('images/firma.png') }}" alt="Firma">
-        <div class="firma-label">Firma autorizada - Apple Boss</div>
-    </div>
 
 </body>
 </html>

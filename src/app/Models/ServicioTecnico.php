@@ -12,18 +12,29 @@ class ServicioTecnico extends Model
 {
     use HasFactory;
 
+    /**
+     * Campos asignables en masa
+     */
     protected $fillable = [
         'codigo_nota',
         'cliente',
         'telefono',
         'equipo',
         'detalle_servicio',
+        'notas_adicionales', // 👈 NUEVO
         'precio_costo',
         'precio_venta',
         'tecnico',
         'fecha',
         'user_id',
         'venta_id',
+    ];
+
+    /**
+     * Casts automáticos
+     */
+    protected $casts = [
+        'fecha' => 'date',
     ];
 
     /**
@@ -44,13 +55,17 @@ class ServicioTecnico extends Model
      |  RELACIONES
      ========================= */
 
-    // Usuario que registró el servicio
+    /**
+     * Usuario que registró el servicio (vendedor)
+     */
     public function vendedor()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Venta asociada (opcional)
+    /**
+     * Venta asociada (opcional)
+     */
     public function venta()
     {
         return $this->belongsTo(Venta::class);
