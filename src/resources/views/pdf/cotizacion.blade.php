@@ -12,53 +12,56 @@
       font-family: 'DejaVu Sans', sans-serif;
       font-size: 10.5px;
       color: #1e1e1e;
-      background-color: #fff;
     }
 
     .header-wrap {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 2px solid #003366;
-      margin-bottom: 10px;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
     }
 
     .brand img {
-      width: 130px;
+      width: 135px;
     }
 
-    .title-top {
+    .company-name {
+      position: absolute;
+      top: 32px;
+      left: 0;
+      right: 0;
       text-align: center;
       font-size: 20px;
       font-weight: bold;
-      color: #003366;
-      text-transform: uppercase;
-      margin-top: -75px;
-      margin-bottom: -1px;
+      letter-spacing: 1px;
+      color: #0f172a;
     }
 
-    .cotizacion-info {
+    .company-sub {
+      text-align: center;
+      font-size: 9.5px;
+      color: #475569;
+      margin-top: 2px;
+    }
+
+    .venta-info {
       text-align: right;
       font-size: 10px;
     }
 
-    .cotizacion-info p {
-      margin: 1px 0;
-      color: #333;
+    .venta-info p {
+      margin: 2px 0;
     }
 
     .section-title {
       font-size: 12px;
       font-weight: bold;
-      margin-top: 10px;
-      margin-bottom: 5px;
-      color: #003366;
-      border-bottom: 1px solid #003366;
+      color: #0f172a;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #0f172a;
       padding-bottom: 3px;
-    }
-
-    .info p {
-      margin: 1px 0;
     }
 
     table {
@@ -69,17 +72,16 @@
     }
 
     th {
-      background-color: #e9f0fa;
-      color: #003366;
-      text-align: left;
-      padding: 5px;
-      font-weight: bold;
-      border: 1px solid #d0dce7;
+      background: #f1f5f9;
+      padding: 6px;
+      border: 1px solid #cbd5e1;
+      text-align: center;
     }
 
     td {
-      padding: 5px;
-      border: 1px solid #d0dce7;
+      padding: 6px;
+      border: 1px solid #cbd5e1;
+      vertical-align: middle;
     }
 
     .table-right {
@@ -87,231 +89,200 @@
     }
 
     .resumen {
-      width: 100%;
-      margin-top: 14px;
-      font-size: 10.5px;
+      margin-top: 18px;
+      font-size: 11px;
     }
 
     .resumen td {
-      padding: 3px 5px;
+      padding: 5px;
     }
 
     .resumen tr td:first-child {
       text-align: right;
       font-weight: bold;
-      width: 85%;
+      width: 80%;
     }
 
     .resumen tr td:last-child {
       text-align: right;
-      width: 15%;
-      color: #003366;
+      width: 20%;
     }
 
     .notas {
       margin-top: 14px;
       font-size: 10px;
-      border-left: 4px solid #003366;
+      border-left: 4px solid #0f172a;
       padding-left: 10px;
-      color: #333;
     }
 
-    .firma {
-      margin-top: 20px;
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .firma-box {
+    .firmas {
+      margin-top: 40px;
+      width: 100%;
       text-align: center;
     }
 
-    .firma-box img {
-      width: 360px;
-      position: relative;
-      top: 30px;
-    }
-
-    .firma-box p {
-      margin: 0;
-    }
-
-    footer {
-      margin-top: 18px;
+    .footer {
+      margin-top: 20px;
+      text-align: center;
       font-size: 9.5px;
-      display: flex;
-      justify-content: space-between;
-      border-top: 1px solid #ccc;
-      padding-top: 5px;
-      color: #444;
+      color: #475569;
     }
 
-    .footer-left p {
-      margin: 2px 0;
-      display: flex;
-      align-items: center;
-    }
-
-    .footer-left img {
-      width: 11px;
-      height: 11px;
-      margin-right: 4px;
-      vertical-align: middle;
-    }
-
-    .footer-right {
-      text-align: right;
-      font-size: 8px;
-      /* letras más pequeñas */
-      margin-top: -5px;
-      /* sube el bloque hacia arriba */
-      line-height: 1.3;
+    .whatsapp {
+      margin-top: 6px;
+      font-size: 10.5px;
+      font-weight: bold;
+      color: #065f46;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="brand">
-    <img src="{{ public_path('images/LOGO.png') }}" alt="Apple Boss">
-  </div>
+  @php
+  $items = collect($cotizacion->items ?? []);
 
-  <h1 class="title-top">APPLE BOSS</h1>
+  $telefono = $cotizacion->telefono ?? '—';
+  $correo = $cotizacion->correo_cliente ?? '—';
 
-  <div class="empresa-legal" style="text-align: left; font-size: 9.8px; color: #333; margin-top: 2px; margin-bottom: 8px; line-height: 1.4;">
-    <p><strong>NIT:</strong> 12555473014 </p>
-    <p><strong>Tipo Contribuyente:</strong> Empresa Unipersonal</p>
-  </div>
+  $subtotalSinFactura = 0;
+  $ivaTotal = 0;
+  $itTotal = 0;
+  $subtotalConFactura = 0;
 
+  foreach ($items as $i) {
+  $cantidad = $i['cantidad'] ?? 1;
+  $base = ($i['precio_sin_factura'] ?? 0) * $cantidad;
 
+  $iva = $base * 0.13;
+  $it = $base * 0.03;
 
+  $subtotalSinFactura += $base;
+  $ivaTotal += $iva;
+  $itTotal += $it;
+  $subtotalConFactura += ($base + $iva + $it);
+  }
+
+  $descuento = $cotizacion->descuento ?? 0;
+  $totalFinal = max(0, $subtotalConFactura - $descuento);
+  @endphp
+
+  <!-- HEADER -->
   <div class="header-wrap">
-    <div></div>
-    <div class="cotizacion-info">
+    <div class="brand">
+      <img src="{{ public_path('images/logo-appletech.jpeg') }}">
+    </div>
+
+    <div class="venta-info">
       <p><strong>COTIZACIÓN</strong></p>
-      <p>Fecha: {{ \Carbon\Carbon::parse($cotizacion->fecha_cotizacion)->format('d/m/Y') }}</p>
-      <p>Código: #COT-{{ $cotizacion->id }}</p>
+      <p>Fecha: {{ optional($cotizacion->created_at)->format('d/m/Y H:i') }}</p>
+      <p>N° Cotización: #{{ $cotizacion->id }}</p>
     </div>
   </div>
 
-  <div class="section-title">Datos del Cliente</div>
-  <div class="info">
-    <p><strong>Nombre:</strong> {{ $cotizacion->nombre_cliente }}</p>
-    <p><strong>Teléfono:</strong> {{ $cotizacion->telefono ?? '-' }}</p>
-    <p><strong>Correo:</strong> {{ $cotizacion->correo_cliente }}</p>
+  <div class="company-name">APPLE TECHNOLOGY</div>
+  <div class="company-sub">
+    Av. Gualberto Villarroel entre Av. América y Calle Buenos Aires<br>
+    Cochabamba – Bolivia
   </div>
 
-  <div class="section-title">Detalle de Productos/Servicios</div>
+  <!-- CLIENTE -->
+  <div class="section-title">Datos del Cliente</div>
+  <p><strong>Cliente:</strong> {{ $cotizacion->nombre_cliente }}</p>
+  <p><strong>Teléfono:</strong> {{ $telefono }}</p>
+  <p><strong>Correo:</strong> {{ $correo }}</p>
+  <p><strong>Vendedor:</strong> {{ optional($cotizacion->usuario)->name ?? '—' }}</p>
+
+  <!-- ITEMS -->
+  <div class="section-title">Detalle de Productos</div>
   <table>
     <thead>
       <tr>
-        <th>Descripción</th>
-        <th class="table-right">Cantidad</th>
-        <th class="table-right">P. Neto</th>
-        <th class="table-right">IVA</th>
-        <th class="table-right">IT</th>
-        <th class="table-right">P. c/Factura</th>
-        <th class="table-right">Subtotal</th>
+        <th>#</th>
+        <th>Producto</th>
+        <th>Cant.</th>
+        <th class="table-right">Precio S/F</th>
+        <th class="table-right">IVA 13%</th>
+        <th class="table-right">IT 3%</th>
+        <th class="table-right">Precio C/F</th>
       </tr>
     </thead>
     <tbody>
+      @foreach($items as $i => $item)
       @php
-      $totalNeto = $totalIVA = $totalIT = $totalFinal = 0;
-      @endphp
-      @foreach ($cotizacion->items as $item)
-      @php
-      $base = $item['precio_base'] ?? 0;
+      $cant = $item['cantidad'] ?? 1;
+      $baseUnit = $item['precio_sin_factura'] ?? 0;
+      $base = $baseUnit * $cant;
       $iva = $base * 0.13;
       $it = $base * 0.03;
-      $con_factura = $item['precio_con_factura'] ?? ($base + $iva + $it);
-      $subtotal = $con_factura * $item['cantidad'];
-
-      $totalNeto += $base * $item['cantidad'];
-      $totalIVA += $iva * $item['cantidad'];
-      $totalIT += $it * $item['cantidad'];
-      $totalFinal += $subtotal;
+      $totalLinea = $base + $iva + $it;
       @endphp
       <tr>
-        <td>{{ $item['nombre'] }}</td>
-        <td class="table-right">{{ $item['cantidad'] }}</td>
-        <td class="table-right">Bs {{ number_format($base, 2) }}</td>
-        <td class="table-right">Bs {{ number_format($iva, 2) }}</td>
-        <td class="table-right">Bs {{ number_format($it, 2) }}</td>
-        <td class="table-right">Bs {{ number_format($con_factura, 2) }}</td>
-        <td class="table-right">Bs {{ number_format($subtotal, 2) }}</td>
+        <td>{{ $i + 1 }}</td>
+        <td>{{ $item['nombre'] ?? '—' }}</td>
+        <td class="table-right">{{ $cant }}</td>
+        <td class="table-right">Bs {{ number_format($base,2) }}</td>
+        <td class="table-right">Bs {{ number_format($iva,2) }}</td>
+        <td class="table-right">Bs {{ number_format($it,2) }}</td>
+        <td class="table-right"><strong>Bs {{ number_format($totalLinea,2) }}</strong></td>
       </tr>
       @endforeach
     </tbody>
   </table>
 
-  @php
-  $descuento = $cotizacion->descuento ?? 0;
-  $subtotalConFactura = $totalNeto + $totalIVA + $totalIT;
-  $totalSinFacturaConDescuento = max(0, $totalNeto - $descuento);
-  $totalConFacturaConDescuento = max(0, $subtotalConFactura - $descuento);
-  @endphp
-
+  <!-- RESUMEN -->
   <table class="resumen">
     <tr>
-      <td>SUBTOTAL:</td>
-      <td>Bs {{ number_format($totalNeto, 2) }}</td>
+      <td>Subtotal SIN factura:</td>
+      <td>Bs {{ number_format($subtotalSinFactura,2) }}</td>
     </tr>
     <tr>
-      <td>IVA (13%):</td>
-      <td>Bs {{ number_format($totalIVA, 2) }}</td>
+      <td>IVA 13%:</td>
+      <td>Bs {{ number_format($ivaTotal,2) }}</td>
     </tr>
     <tr>
-      <td>IT (3%):</td>
-      <td>Bs {{ number_format($totalIT, 2) }}</td>
+      <td>IT 3%:</td>
+      <td>Bs {{ number_format($itTotal,2) }}</td>
+    </tr>
+    <tr>
+      <td>Subtotal CON factura:</td>
+      <td>Bs {{ number_format($subtotalConFactura,2) }}</td>
     </tr>
     @if($descuento > 0)
     <tr>
-      <td>DESCUENTO APLICADO:</td>
-      <td>- Bs {{ number_format($descuento, 2) }}</td>
+      <td>Descuento:</td>
+      <td>- Bs {{ number_format($descuento,2) }}</td>
     </tr>
     @endif
     <tr>
-      <td><strong>TOTAL SIN FACTURA (con descuento):</strong></td>
-      <td><strong>Bs {{ number_format($totalSinFacturaConDescuento, 2) }}</strong></td>
-    </tr>
-    <tr>
-      <td><strong>TOTAL CON FACTURA (con descuento):</strong></td>
-      <td><strong>Bs {{ number_format($totalConFacturaConDescuento, 2) }}</strong></td>
+      <td><strong>TOTAL A PAGAR:</strong></td>
+      <td><strong>Bs {{ number_format($totalFinal,2) }}</strong></td>
     </tr>
   </table>
 
+  @if($cotizacion->notas_adicionales)
   <div class="notas">
-    <strong>Nota:</strong>
-    {{ $cotizacion->notas_adicionales ?? 'La cotización es válida por 7 días. La fecha de ejecución se coordinará según disponibilidad.' }}
+    <strong>Notas:</strong> {{ $cotizacion->notas_adicionales }}
   </div>
+  @endif
 
-  <div class="firma" style="margin-top: 20px; display: flex; justify-content: flex-end;">
-  <div class="firma-box" style="text-align: center;">
-    <img src="{{ public_path('images/firma.png') }}"
-      alt="Firma Apple Boss"
-      style="width: 250px; margin: 0 auto 4px;">
-    <p style="margin: 2px 0 0; font-size: 12px; color: #003366;">-------------------------------</p>
-    <p style="margin: 0; font-style: italic; font-size: 10.5px; font-weight: bold; color: #003366;">
-      Firma autorizada - Apple Boss
-    </p>
+  <!-- FIRMAS -->
+  <table class="firmas">
+    <tr>
+      <td>
+        <img src="{{ public_path('images/firma.png') }}" width="140"><br>
+        <strong>Firma autorizada</strong>
+      </td>
+      <td>
+        <strong>Firma del Cliente</strong>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    Documento sin valor fiscal · Cotización referencial<br>
+    <div class="whatsapp">WhatsApp: +591 77 411 048</div>
   </div>
-</div>
-
-  </div>
-
-  <footer>
-    <div class="footer-left">
-      <p><img src="{{ public_path('images/icon-phone.png') }}" alt=""> +591 75904313</p>
-      <p><img src="{{ public_path('images/icon-instagram.png') }}" alt=""> @apple_boss_bol</p>
-      <p><img src="{{ public_path('images/icon-facebook.png') }}" alt=""> Apple Boss</p>
-      <p><img src="{{ public_path('images/icon-tiktok.png') }}" alt=""> @apple_boss_bo</p>
-      <p><img src="{{ public_path('images/icon-location.png') }}" alt=""> Av. Melchor Urquidi, entre Calle Fidel Anze y Av. Julio Rodríguez, Edificio Fidel Anze</p>
-    </div>
-    <div class="footer-right">
-      <p><strong>Validez:</strong><br>Esta cotización tiene validez por 3 días hábiles.</p>
-    </div>
-  </footer>
-
 
 </body>
 

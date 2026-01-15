@@ -23,7 +23,7 @@ export default function Index({ ventas }) {
   };
 
   /* ===============================
-     DESGLOSE DE ITEMS
+     DESGLOSE DE ITEMS (NO TOCADO)
   =============================== */
   const itemsDesglosados = ventas.flatMap((venta) => {
     if (venta.tipo_venta === 'servicio_tecnico') {
@@ -60,10 +60,10 @@ export default function Index({ ventas }) {
         item.tipo === 'celular'
           ? item.celular?.modelo
           : item.tipo === 'computadora'
-          ? item.computadora?.nombre
-          : item.tipo === 'producto_apple'
-          ? item.producto_apple?.modelo
-          : item.producto_general?.nombre;
+            ? item.computadora?.nombre
+            : item.tipo === 'producto_apple'
+              ? item.producto_apple?.modelo
+              : item.producto_general?.nombre;
 
       return {
         cliente: venta.nombre_cliente,
@@ -93,14 +93,21 @@ export default function Index({ ventas }) {
       <Head title="Ventas Desglosadas" />
 
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Ventas Desglosadas (Vendedor)
-        </h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">
+            Ventas Desglosadas
+          </h1>
+          <p className="text-slate-500">
+            Detalle completo de ventas y servicios registrados
+          </p>
+        </div>
 
         <Link
           href={route('vendedor.ventas.create')}
-          className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow transition"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl
+            bg-emerald-600 hover:bg-emerald-700
+            text-white text-sm font-semibold shadow transition"
         >
           ➕ Nueva Venta
         </Link>
@@ -109,16 +116,18 @@ export default function Index({ ventas }) {
       {/* BUSCADOR */}
       <form
         onSubmit={buscarNota}
-        className="flex flex-col sm:flex-row gap-3 mb-6"
+        className="flex flex-col sm:flex-row gap-3 mb-8"
       >
         <input
           value={codigoNota}
           onChange={(e) => setCodigoNota(e.target.value)}
-          placeholder="Buscar por código o cliente"
-          className="border border-gray-300 px-4 py-2 rounded-lg w-full sm:w-80 focus:ring-2 focus:ring-blue-500"
+          placeholder="Buscar por código de nota o cliente"
+          className="w-full sm:w-80 rounded-xl border border-slate-200 px-4 py-3 text-sm
+            focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
         />
         <button
-          className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+          className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700
+            text-white text-sm font-semibold transition shadow"
         >
           Buscar
         </button>
@@ -126,26 +135,27 @@ export default function Index({ ventas }) {
 
       {/* RESULTADOS BUSQUEDA */}
       {resultadosBusqueda.length > 0 && (
-        <div className="mb-8 bg-white rounded-xl shadow border">
-          <div className="px-4 py-3 border-b bg-gray-50 font-semibold text-gray-700">
+        <div className="mb-8 rounded-2xl border bg-white shadow-sm">
+          <div className="px-5 py-3 border-b bg-slate-50 font-semibold text-slate-700">
             Resultados encontrados
           </div>
 
           {resultadosBusqueda.map((r) => (
             <div
               key={r.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 border-b last:border-b-0"
+              className="flex flex-col sm:flex-row sm:items-center justify-between
+                px-5 py-4 border-b last:border-b-0"
             >
               <div>
-                <div className="font-mono text-blue-700 font-semibold">
+                <div className="font-mono text-emerald-700 font-semibold">
                   {r.codigo_nota}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-slate-600">
                   {r.nombre_cliente}
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-2 sm:mt-0">
+              <div className="flex gap-4 mt-3 sm:mt-0 text-sm">
                 <a
                   href={
                     r.tipo === 'servicio_tecnico'
@@ -153,7 +163,7 @@ export default function Index({ ventas }) {
                       : route('vendedor.ventas.boleta', r.id_real)
                   }
                   target="_blank"
-                  className="text-sm font-medium text-blue-600 hover:underline"
+                  className="text-emerald-600 hover:underline font-medium"
                 >
                   🧾 Normal
                 </a>
@@ -165,7 +175,7 @@ export default function Index({ ventas }) {
                       : route('vendedor.ventas.boleta80', r.id_real)
                   }
                   target="_blank"
-                  className="text-sm font-medium text-green-600 hover:underline"
+                  className="text-blue-600 hover:underline font-medium"
                 >
                   🖨 Térmica
                 </a>
@@ -176,9 +186,9 @@ export default function Index({ ventas }) {
       )}
 
       {/* TABLA */}
-      <div className="bg-white rounded-xl shadow-xl overflow-x-auto border">
+      <div className="rounded-2xl border bg-white shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-blue-600 text-white text-xs uppercase">
+          <thead className="bg-slate-50 text-slate-600 uppercase text-xs">
             <tr>
               <th className="px-4 py-3 text-left">Cliente</th>
               <th className="px-4 py-3">Código</th>
@@ -195,24 +205,19 @@ export default function Index({ ventas }) {
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y">
             {itemsDesglosados.map((i, idx) => (
-              <tr
-                key={idx}
-                className="border-t hover:bg-gray-50 transition"
-              >
+              <tr key={idx} className="hover:bg-emerald-50/40 transition">
                 <td className="px-4 py-3">{i.cliente}</td>
-                <td className="px-4 py-3 font-mono text-blue-700">
+                <td className="px-4 py-3 font-mono text-emerald-700">
                   {i.codigoNota}
                 </td>
                 <td className="px-4 py-3">{i.producto}</td>
-                <td className="px-4 py-3 text-right">
-                  {i.precioVenta.toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-right text-red-600">
+                <td className="px-4 py-3 text-right">{i.precioVenta.toFixed(2)}</td>
+                <td className="px-4 py-3 text-right text-rose-600">
                   -{i.descuento.toFixed(2)}
                 </td>
-                <td className="px-4 py-3 text-right text-yellow-600">
+                <td className="px-4 py-3 text-right text-amber-600">
                   -{i.permuta.toFixed(2)}
                 </td>
                 <td className="px-4 py-3 text-right text-blue-600">
@@ -222,11 +227,8 @@ export default function Index({ ventas }) {
                   {i.precioFinal.toFixed(2)}
                 </td>
                 <td
-                  className={`px-4 py-3 text-right font-bold ${
-                    i.ganancia < 0
-                      ? 'text-red-600'
-                      : 'text-green-600'
-                  }`}
+                  className={`px-4 py-3 text-right font-bold ${i.ganancia < 0 ? 'text-rose-600' : 'text-emerald-600'
+                    }`}
                 >
                   {i.ganancia < 0
                     ? `Se invirtió ${Math.abs(i.ganancia).toFixed(2)}`
@@ -236,23 +238,23 @@ export default function Index({ ventas }) {
                 <td className="px-4 py-3 text-xs">
                   {new Date(i.fecha).toLocaleDateString('es-BO')}
                   <br />
-                  <span className="text-gray-500">
+                  <span className="text-slate-500">
                     {new Date(i.fecha).toLocaleTimeString('es-BO')}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 text-xs">
                     <a
                       href={route('vendedor.ventas.boleta', i.id_venta)}
                       target="_blank"
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-emerald-600 hover:underline"
                     >
                       🧾 Normal
                     </a>
                     <a
                       href={route('vendedor.ventas.boleta80', i.id_venta)}
                       target="_blank"
-                      className="text-xs text-green-600 hover:underline"
+                      className="text-blue-600 hover:underline"
                     >
                       🖨 Térmica
                     </a>
@@ -264,12 +266,12 @@ export default function Index({ ventas }) {
         </table>
 
         {/* RESUMEN */}
-        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end">
+        <div className="px-6 py-4 border-t bg-slate-50 flex justify-end">
           <div className="text-right">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-slate-600">
               Ganancia Total Positiva
             </div>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-emerald-600">
               {gananciaTotal.toFixed(2)} Bs
             </div>
           </div>

@@ -197,20 +197,65 @@
     </div>
     @endforeach
 
-    <!-- PERMUTA DETALLADA -->
-    @if($venta->entregadoCelular)
+    {{-- =====================
+     PERMUTA DETALLADA
+===================== --}}
+    @if(
+    $venta->entregadoCelular ||
+    $venta->entregadoComputadora ||
+    $venta->entregadoProductoApple
+    )
     <div class="divider"></div>
 
     <div class="info">
         <p><strong>Producto entregado en permuta</strong></p>
+
+        {{-- CELULAR --}}
+        @if($venta->entregadoCelular)
         <p>
+            <strong>Tipo:</strong> Celular<br>
             {{ $venta->entregadoCelular->modelo }} · {{ $venta->entregadoCelular->color }}<br>
             Batería: {{ $venta->entregadoCelular->bateria }}<br>
             Estado IMEI: {{ $venta->entregadoCelular->estado_imei }}<br>
             IMEI 1: {{ $venta->entregadoCelular->imei_1 }}<br>
             IMEI 2: {{ $venta->entregadoCelular->imei_2 }}
         </p>
-        <p><strong>Valor aplicado:</strong> - Bs {{ number_format($venta->entregadoCelular->precio_costo, 2) }}</p>
+        <p>
+            <strong>Valor aplicado:</strong>
+            - Bs {{ number_format($venta->entregadoCelular->precio_costo, 2) }}
+        </p>
+        @endif
+
+        {{-- COMPUTADORA --}}
+        @if($venta->entregadoComputadora)
+        <p>
+            <strong>Tipo:</strong> Computadora<br>
+            {{ $venta->entregadoComputadora->nombre }}<br>
+            {{ $venta->entregadoComputadora->procesador }} ·
+            {{ $venta->entregadoComputadora->ram }} /
+            {{ $venta->entregadoComputadora->almacenamiento }}<br>
+            Serie: {{ $venta->entregadoComputadora->numero_serie }}
+        </p>
+        <p>
+            <strong>Valor aplicado:</strong>
+            - Bs {{ number_format($venta->entregadoComputadora->precio_costo, 2) }}
+        </p>
+        @endif
+
+        {{-- PRODUCTO APPLE --}}
+        @if($venta->entregadoProductoApple)
+        <p>
+            <strong>Tipo:</strong> Producto Apple<br>
+            {{ $venta->entregadoProductoApple->modelo }} · {{ $venta->entregadoProductoApple->capacidad }}<br>
+            Color: {{ $venta->entregadoProductoApple->color }}<br>
+            Batería: {{ $venta->entregadoProductoApple->bateria }}<br>
+            Serie / IMEI: {{ $venta->entregadoProductoApple->numero_serie ?? $venta->entregadoProductoApple->imei_1 }}
+        </p>
+        <p>
+            <strong>Valor aplicado:</strong>
+            - Bs {{ number_format($venta->entregadoProductoApple->precio_costo, 2) }}
+        </p>
+        @endif
     </div>
     @endif
 

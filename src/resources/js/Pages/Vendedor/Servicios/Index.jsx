@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { route } from 'ziggy-js';
 import axios from 'axios';
 import VendedorLayout from '@/Layouts/VendedorLayout';
+import FancyButton from '@/Components/FancyButton';
 
 export default function ServiciosIndex({ servicios = [], filtros = {}, vendedores = [] }) {
   const [fechaInicio, setFechaInicio] = useState(filtros.fecha_inicio || '');
@@ -12,7 +13,9 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
   const [buscar, setBuscar] = useState('');
   const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
 
-
+  /* ===============================
+     FILTROS
+  =============================== */
   const handleFiltrar = (e) => {
     e.preventDefault();
     router.get(route('vendedor.servicios.index'), {
@@ -28,25 +31,29 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
       fecha_fin: fechaFin,
       vendedor_id: vendedorId,
     }).toString();
-    window.open(route('vendedor.servicios.exportarFiltrado') + '?' + queryParams, '_blank');
+
+    window.open(
+      route('vendedor.servicios.exportarFiltrado') + '?' + queryParams,
+      '_blank'
+    );
   };
 
+  /* ===============================
+     BUSCADOR
+  =============================== */
   const buscarServicio = async (e) => {
     e.preventDefault();
     if (!buscar.trim()) return;
 
     try {
-      const response = await axios.get(route('vendedor.servicios.index'), {
+      const res = await axios.get(route('vendedor.servicios.index'), {
         params: { buscar: buscar.trim() },
       });
-      setResultadosBusqueda(response.data.servicios || []);
-    } catch (error) {
-      console.error('Error al buscar servicio técnico:', error);
+      setResultadosBusqueda(res.data.servicios || []);
+    } catch {
       setResultadosBusqueda([]);
     }
   };
-
-
 
   const listaFinal = resultadosBusqueda !== null ? resultadosBusqueda : servicios;
 
@@ -54,70 +61,89 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
     <VendedorLayout>
       <Head title="Servicios Técnicos" />
 
+      {/* ===============================
+         HEADER
+      =============================== */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">🧰 Servicios Técnicos</h1>
-        <div className="flex gap-3 mt-4 md:mt-0">
-          <Link
-            href={route('vendedor.servicios.create')}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition"
-          >
-            ➕ Registrar Servicio
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Servicios Técnicos</h1>
+          <p className="text-sm text-gray-500">
+            Gestión y control de servicios registrados
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
+          <Link href={route('vendedor.servicios.create')} className="no-underline">
+            <FancyButton variant="success">
+              Registrar servicio
+            </FancyButton>
           </Link>
-          <button
+
+          <FancyButton
+            variant="danger"
+            type="button"
             onClick={handleExportarFiltrado}
-            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow transition"
           >
-            🧾 Exportar PDF Filtrado
-          </button>
+            Exportar PDF
+          </FancyButton>
         </div>
       </div>
 
-      <form onSubmit={buscarServicio} className="flex items-center gap-2 mb-6">
+      {/* ===============================
+         BUSCADOR
+      =============================== */}
+      <form
+        onSubmit={buscarServicio}
+        className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-6"
+      >
         <input
           type="text"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
-          placeholder="Buscar por código o nombre del cliente"
-          className="border px-3 py-2 rounded w-80"
+          placeholder="Buscar por código de nota o cliente"
+          className="w-full md:w-96 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500"
         />
-        <button
-          type="submit"
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
+
+        <FancyButton size="sm" variant="success" type="submit">
           Buscar
-        </button>
+        </FancyButton>
       </form>
 
+      {/* ===============================
+         FILTROS AVANZADOS
+      =============================== */}
       <form
         onSubmit={handleFiltrar}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-md mb-6"
+        className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-2xl shadow mb-6"
       >
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Inicio</label>
+          <label className="text-xs font-semibold text-gray-600">Fecha inicio</label>
           <input
             type="date"
             value={fechaInicio}
             onChange={(e) => setFechaInicio(e.target.value)}
-            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
+            className="w-full mt-1 rounded-lg border-gray-300"
           />
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Fin</label>
+          <label className="text-xs font-semibold text-gray-600">Fecha fin</label>
           <input
             type="date"
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
-            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
+            className="w-full mt-1 rounded-lg border-gray-300"
           />
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vendedor</label>
+          <label className="text-xs font-semibold text-gray-600">Vendedor</label>
           <select
             value={vendedorId}
             onChange={(e) => setVendedorId(e.target.value)}
-            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
+            className="w-full mt-1 rounded-lg border-gray-300"
           >
-            <option value="">— Todos —</option>
+            <option value="">Todos</option>
             {vendedores.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.name}
@@ -125,80 +151,83 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
             ))}
           </select>
         </div>
+
         <div className="flex items-end">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition"
-          >
-            🔎 Filtrar
-          </button>
+          <FancyButton variant="primary" size="sm" type="submit" className="w-full">
+            Filtrar
+          </FancyButton>
         </div>
       </form>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl overflow-x-auto">
-        <table className="w-full table-auto text-sm text-left text-gray-800 dark:text-gray-100">
-          <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase">
+      {/* ===============================
+         TABLA
+      =============================== */}
+      <div className="bg-white rounded-xl shadow overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
             <tr>
               <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Código Nota</th>
+              <th className="px-4 py-3">Código</th>
               <th className="px-4 py-3">Equipo</th>
               <th className="px-4 py-3">Técnico</th>
               <th className="px-4 py-3 text-right">Costo</th>
               <th className="px-4 py-3 text-right">Venta</th>
               <th className="px-4 py-3 text-right">Ganancia</th>
               <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Registrado por</th>
+              <th className="px-4 py-3">Vendedor</th>
               <th className="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
+
           <tbody>
             {listaFinal.length > 0 ? (
               listaFinal.map((s) => {
-                const costo = parseFloat(s.precio_costo || 0);
-                const venta = parseFloat(s.precio_venta || 0);
+                const costo = Number(s.precio_costo || 0);
+                const venta = Number(s.precio_venta || 0);
                 const ganancia = venta - costo;
 
                 return (
-                  <tr
-                    key={s.id}
-                    className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                  >
-                    <td className="px-4 py-3">{s.cliente}</td>
-                    <td className="px-4 py-3 text-blue-700 font-mono">{s.codigo_nota || '—'}</td>
+                  <tr key={s.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{s.cliente}</td>
+                    <td className="px-4 py-3 font-mono text-blue-600">{s.codigo_nota || '—'}</td>
                     <td className="px-4 py-3">{s.equipo}</td>
                     <td className="px-4 py-3">{s.tecnico}</td>
                     <td className="px-4 py-3 text-right">{costo.toFixed(2)} Bs</td>
                     <td className="px-4 py-3 text-right">{venta.toFixed(2)} Bs</td>
-                    <td className="px-4 py-3 text-right text-green-600 font-semibold">{ganancia.toFixed(2)} Bs</td>
+                    <td
+                      className={`px-4 py-3 text-right font-semibold ${
+                        ganancia > 0 ? 'text-emerald-600' : 'text-red-600'
+                      }`}
+                    >
+                      {ganancia.toFixed(2)} Bs
+                    </td>
                     <td className="px-4 py-3">{dayjs(s.fecha).format('DD/MM/YYYY')}</td>
                     <td className="px-4 py-3">{s.vendedor?.name || '—'}</td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
-
-                        {/* VER NOTA A4 */}
+                      <div className="flex justify-center gap-2">
                         <a
-                          href={route('vendedor.servicios.boleta', { servicio: s.id })}
+                          href={route('vendedor.servicios.boleta', s.id)}
                           target="_blank"
-                          className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                          className="no-underline"
                         >
-                          📄 Ver
+                          <FancyButton size="sm" variant="primary">
+                            Ver
+                          </FancyButton>
                         </a>
 
-                        {/* IMPRIMIR 80 MM */}
-                        <button
+                        <FancyButton
+                          size="sm"
+                          variant="dark"
                           type="button"
                           onClick={() =>
                             window.open(
-                              route('vendedor.servicios.recibo80mm', { servicio: s.id }),
+                              route('vendedor.servicios.recibo80mm', s.id),
                               '_blank'
                             )
                           }
-                          className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-                          title="Imprimir recibo térmico 80mm"
                         >
-                          🖨️ Imprimir
-                        </button>
-
+                          Imprimir
+                        </FancyButton>
                       </div>
                     </td>
                   </tr>
@@ -206,8 +235,8 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
               })
             ) : (
               <tr>
-                <td colSpan="10" className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                  No hay servicios registrados.
+                <td colSpan="10" className="text-center py-8 text-gray-500">
+                  No hay servicios técnicos registrados
                 </td>
               </tr>
             )}

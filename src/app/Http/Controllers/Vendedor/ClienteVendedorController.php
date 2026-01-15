@@ -31,21 +31,24 @@ class ClienteVendedorController extends Controller
      */
     public function sugerencias(Request $request)
     {
-        $term = $request->input('q'); // 👈 coincide con axios
+        $term = $request->input('term');
 
         if (!$term || strlen($term) < 2) {
             return [];
         }
 
-        return Cliente::where('user_id', Auth::id()) // 🔐 CLAVE
+        return Cliente::where('user_id', Auth::id())
             ->where(function ($q) use ($term) {
                 $q->where('nombre', 'ilike', "%{$term}%")
-                  ->orWhere('telefono', 'ilike', "%{$term}%");
+                    ->orWhere('telefono', 'ilike', "%{$term}%");
             })
-            ->select('id', 'nombre', 'telefono')
+            ->select('id', 'nombre', 'telefono', 'correo')
             ->limit(8)
             ->get();
     }
+
+
+
 
     /**
      * Enviar promociones por WhatsApp a los clientes del vendedor.

@@ -135,12 +135,13 @@
 
   <!-- EMPRESA -->
   <div class="center">
-    <div class="title-main">APPLE TECHNOLOGY</div>
-    <div class="subtitle">
-      Av. Gualberto Villarroel<br>
-      entre Av. América y Calle Buenos Aires<br>
-      Cochabamba – Bolivia
+    <div class="title">APPLE TECHNOLOGY</div>
+    <div class="sub">
+      Av. Gualberto Villarroel entre Av. América<br>
+      y Calle Buenos Aires · Cochabamba<br>
+      <strong> +591 77 411 048</strong>
     </div>
+  </div>
   </div>
 
   <div class="divider"></div>
