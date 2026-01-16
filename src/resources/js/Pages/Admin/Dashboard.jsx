@@ -7,9 +7,11 @@ import { route } from 'ziggy-js';
 import QuickDateFilter from '@/Components/QuickDateFilter';
 import EconomicCharts from '@/Components/EconomicCharts';
 import SalesChart from '@/Components/SalesChart';
+import DashboardActions from '@/Components/DashboardActions';
+
 
 /* =======================
-   HELPERS GLOBALES (ÚNICOS)
+   HELPERS GLOBALES
 ======================= */
 const safeNum = (x) => {
   if (typeof x === 'number') return x;
@@ -28,17 +30,10 @@ const safeNum = (x) => {
 const fmtBs = (n) =>
   `Bs ${safeNum(n).toLocaleString('es-BO', { minimumFractionDigits: 2 })}`;
 
-/* 🔐 NORMALIZADOR DEFINITIVO PARA TOTALES */
 const normalizeVentaTotal = (tipo, total) => {
   const t = String(tipo || '').toLowerCase();
   const n = safeNum(total);
-
-  // servicio técnico viene en centavos
-  if (t === 'servicio_tecnico') {
-    return n / 100;
-  }
-
-  // protección extra por si viene inflado
+  if (t === 'servicio_tecnico') return n / 100;
   return n > 10000 ? n / 100 : n;
 };
 
@@ -55,27 +50,6 @@ export default function Dashboard({
   const [fechaInicio, setFechaInicio] = useState(filtros.fecha_inicio || hoyStr);
   const [fechaFin, setFechaFin] = useState(filtros.fecha_fin || hoyStr);
   const [vendedorId, setVendedorId] = useState(filtros.vendedor_id || '');
-
-  /* =======================
-     UTILIDAD POST EGRESOS
-  ======================= */
-  const utilidadPostEgresos = (() => {
-    if (Array.isArray(distribucion_economica)) {
-      const u = distribucion_economica.find(d =>
-        String(d?.label || '').toLowerCase().includes('utilidad')
-      );
-      if (u) return safeNum(u.valor);
-    }
-
-    if (resumen_total.utilidad_disponible !== undefined) {
-      return safeNum(resumen_total.utilidad_disponible);
-    }
-
-    return (
-      safeNum(resumen_total.ganancia_neta) -
-      safeNum(resumen_total.egresos_total)
-    );
-  })();
 
   /* =======================
      FILTRO AUTOMÁTICO HOY
@@ -124,15 +98,11 @@ export default function Dashboard({
       </div>
 
       {/* ================= ACCIONES ================= */}
-      <div className="flex flex-wrap gap-3 px-4 mb-10">
-        <QuickButton routeName="admin.ventas.create" color="sky" text="➕ Venta" />
-        <QuickButton routeName="admin.servicios.create" color="green" text="⚙️ Servicio" />
-        <ProductoSelectorButton />
-        <QuickButton routeName="admin.reportes.index" color="rose" text="📄 Reportes" />
+      <div className="px-4 mb-10">
+        <DashboardActions />
       </div>
 
-      {/* ================= TUS TARJETAS (INTOCABLES) ================= */}
-      {/* BLOQUE 1 */}
+      {/* ================= BLOQUE 1 ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 mb-10">
         <Card titulo="Ventas Hoy" valor={fmtBs(resumen.ventas_hoy)} color="sky" />
 
@@ -146,94 +116,195 @@ export default function Dashboard({
           color={safeNum(resumen_total.ganancia_neta) < 0 ? 'rose' : 'green'}
         />
 
-        <Card titulo="Servicios Técnicos" valor={resumen.servicios || 0} color="indigo" />
-        <Card titulo="Cotizaciones Enviadas" valor={resumen.cotizaciones || 0} color="rose" />
-      </div>
-
-      {/* BLOQUE 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 mb-12">
-        <Card titulo="Total Ventas (Precio final pagado)" valor={fmtBs(resumen_total.total_ventas)} color="sky" />
         <Card
-          titulo="Inversión Total (Costo + Permuta)"
-          valor={fmtBs(safeNum(resumen_total.total_costo) + safeNum(resumen_total.total_permuta))}
+          titulo="Servicios Técnicos"
+          valor={resumen.servicios || 0}
           color="indigo"
         />
-        <Card titulo="Total Descuento" valor={fmtBs(resumen_total.total_descuento)} color="rose" />
+
+        <Card
+          titulo="Cotizaciones Enviadas"
+          valor={resumen.cotizaciones || 0}
+          color="rose"
+        />
+      </div>
+
+      {/* ================= BLOQUE 2 ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 mb-12">
+        <Card
+          titulo="Total Ventas (Precio final pagado)"
+          valor={fmtBs(resumen_total.total_ventas)}
+          color="sky"
+        />
+
+        <Card
+          titulo="Inversión Total (Costo + Permuta)"
+          valor={fmtBs(
+            safeNum(resumen_total.total_costo) +
+            safeNum(resumen_total.total_permuta)
+          )}
+          color="indigo"
+        />
+
+        <Card
+          titulo="Total Descuento"
+          valor={fmtBs(resumen_total.total_descuento)}
+          color="rose"
+        />
+
         <Card
           titulo="Utilidad Disponible (ganancia - egresos)"
           valor={
             safeNum(resumen_total.utilidad_disponible) < 0
-              ? `Se invirtió ${fmtBs(Math.abs(safeNum(resumen_total.utilidad_disponible)))}`
+              ? `Se invirtió ${fmtBs(
+                Math.abs(safeNum(resumen_total.utilidad_disponible))
+              )}`
               : fmtBs(resumen_total.utilidad_disponible)
           }
           color={safeNum(resumen_total.utilidad_disponible) < 0 ? 'rose' : 'green'}
         />
       </div>
 
-      {/* BLOQUE 3 */}
+      {/* ================= BLOQUE 3 ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 mb-10">
         <Card
           titulo="Productos Generales Disponibles"
           valor={resumen.stock_detalle?.productos_generales || 0}
           color="indigo"
         />
+
         <Card
           titulo="% del Stock Total"
           valor={`${resumen.stock_detalle?.porcentaje_productos_generales || 0}%`}
           color="sky"
         />
       </div>
-
-      {/* ================= FILTROS ================= */}
-      <QuickDateFilter vendedorId={vendedorId} />
-
       <form
         onSubmit={handleFiltrar}
-        className="flex flex-wrap gap-4 items-end px-4 mb-12 bg-white rounded-xl shadow p-4"
+        className="
+    px-4 mb-12
+    bg-white
+    rounded-2xl
+    shadow-sm
+    border border-gray-100
+    p-5
+  "
       >
-        <div>
-          <label className="text-sm font-semibold">📅 Fecha inicio</label>
-          <input
-            type="date"
-            className="form-input mt-1"
-            value={fechaInicio}
-            max={fechaFin}
-            onChange={(e) => setFechaInicio(e.target.value)}
-          />
-        </div>
+        {/* GRID */}
+        <div className="
+    grid
+    grid-cols-1
+    sm:grid-cols-2
+    lg:grid-cols-4
+    gap-4
+    items-end
+  ">
+          {/* FECHA INICIO */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">
+              Fecha inicio
+            </label>
+            <input
+              type="date"
+              value={fechaInicio}
+              max={fechaFin}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="
+          w-full
+          rounded-lg
+          border border-gray-300
+          px-3 py-2
+          text-sm
+          focus:border-sky-500
+          focus:ring-2 focus:ring-sky-100
+          outline-none
+        "
+            />
+          </div>
 
-        <div>
-          <label className="text-sm font-semibold">📅 Fecha fin</label>
-          <input
-            type="date"
-            className="form-input mt-1"
-            value={fechaFin}
-            min={fechaInicio}
-            max={hoyStr}
-            onChange={(e) => setFechaFin(e.target.value)}
-          />
-        </div>
+          {/* FECHA FIN */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">
+              Fecha fin
+            </label>
+            <input
+              type="date"
+              value={fechaFin}
+              min={fechaInicio}
+              max={hoyStr}
+              onChange={(e) => setFechaFin(e.target.value)}
+              className="
+          w-full
+          rounded-lg
+          border border-gray-300
+          px-3 py-2
+          text-sm
+          focus:border-sky-500
+          focus:ring-2 focus:ring-sky-100
+          outline-none
+        "
+            />
+          </div>
 
-        <div>
-          <label className="text-sm font-semibold">👤 Vendedor</label>
-          <select
-            className="form-select mt-1"
-            value={vendedorId}
-            onChange={(e) => setVendedorId(e.target.value)}
-          >
-            <option value="">Todos</option>
-            {vendedores.map((v) => (
-              <option key={v.id} value={v.id}>{v.name}</option>
-            ))}
-          </select>
-        </div>
+          {/* VENDEDOR */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">
+              Vendedor
+            </label>
+            <select
+              value={vendedorId}
+              onChange={(e) => setVendedorId(e.target.value)}
+              className="
+          w-full
+          rounded-lg
+          border border-gray-300
+          px-3 py-2
+          text-sm
+          bg-white
+          focus:border-sky-500
+          focus:ring-2 focus:ring-sky-100
+          outline-none
+        "
+            >
+              <option value="">Todos</option>
+              {vendedores.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <button className="btn bg-sky-700 text-white px-4 py-2 rounded-lg shadow">
-          🔎 Filtrar
-        </button>
+          {/* BOTÓN */}
+          <div className="flex">
+            <button
+              type="submit"
+              className="
+          w-full
+          lg:w-auto
+          inline-flex
+          items-center
+          justify-center
+          gap-2
+          rounded-lg
+          bg-sky-600
+          hover:bg-sky-700
+          text-white
+          px-6 py-2.5
+          text-sm font-semibold
+          shadow-sm
+          transition
+        "
+            >
+              <i className="fas fa-filter text-xs"></i>
+              Filtrar
+            </button>
+          </div>
+        </div>
       </form>
 
-      {/* ================= GRÁFICOS (AMBOS) ================= */}
+
+      {/* ================= GRÁFICOS ================= */}
       <div className="px-4 mb-14">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <div className="bg-white rounded-xl shadow p-6">
@@ -252,9 +323,9 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* ================= ÚLTIMAS 5 VENTAS (BUG CORREGIDO) ================= */}
+      {/* ================= ÚLTIMAS VENTAS ================= */}
       <div className="px-4 mb-12">
-        <h2 className="text-lg font-semibold mb-3">🛒 Últimas 5 ventas</h2>
+        <h2 className="text-lg font-semibold mb-3">Últimas 5 ventas</h2>
         <div className="overflow-auto bg-white rounded-xl shadow border">
           <table className="min-w-full text-sm">
             <thead className="bg-sky-100 text-sky-800">
@@ -287,9 +358,8 @@ export default function Dashboard({
 }
 
 /* =======================
-   COMPONENTES AUX
+   CARD AUX
 ======================= */
-
 function Card({ titulo, valor, color }) {
   const colors = {
     sky: 'text-sky-700',
@@ -302,55 +372,6 @@ function Card({ titulo, valor, color }) {
     <div className="bg-white shadow-md rounded-xl p-5 text-center hover:shadow-lg transition">
       <p className="text-sm text-gray-500 mb-1">{titulo}</p>
       <h2 className={`text-xl font-bold ${colors[color]}`}>{valor}</h2>
-    </div>
-  );
-}
-
-function QuickButton({ routeName, color, text }) {
-  const bg = {
-    sky: 'bg-sky-600 hover:bg-sky-700',
-    green: 'bg-green-600 hover:bg-green-700',
-    rose: 'bg-rose-600 hover:bg-rose-700',
-  };
-
-  return (
-    <Link
-      href={route(routeName)}
-      className={`${bg[color]} text-white rounded-lg px-4 py-3 font-semibold shadow`}
-    >
-      {text}
-    </Link>
-  );
-}
-
-function ProductoSelectorButton() {
-  const [open, setOpen] = useState(false);
-
-  const go = (tipo) => {
-    const map = {
-      celular: 'admin.celulares.create',
-      computadora: 'admin.computadoras.create',
-      producto_general: 'admin.productos-generales.create',
-    };
-    router.visit(route(map[tipo]));
-  };
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-3 font-semibold shadow"
-      >
-        📦 Producto
-      </button>
-
-      {open && (
-        <div className="absolute z-50 mt-2 bg-white rounded-xl shadow p-3 w-56">
-          <button onClick={() => go('celular')} className="w-full text-left py-2 hover:bg-indigo-50">📱 Celular</button>
-          <button onClick={() => go('computadora')} className="w-full text-left py-2 hover:bg-indigo-50">💻 Computadora</button>
-          <button onClick={() => go('producto_general')} className="w-full text-left py-2 hover:bg-indigo-50">📦 Producto General</button>
-        </div>
-      )}
     </div>
   );
 }

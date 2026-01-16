@@ -4,24 +4,23 @@ import axios from 'axios';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { route } from 'ziggy-js';
 
-/* ======================
-   ESTILOS BASE
-====================== */
-const inputStyle = `
-  w-full rounded-lg 
-  bg-slate-900/60
-  border border-slate-700 
-  px-3 py-2 text-sm text-slate-200
-  focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30
-  transition-all outline-none
-  placeholder:text-slate-500
-`;
+import {
+  FormContainer,
+  FormTitle,
+  FormSectionTitle,
+  Input,
+  Textarea,
+  PrimaryButton,
+  SecondaryButton,
 
-const btnBase = `
-  inline-flex items-center justify-center gap-2
-  font-semibold transition-all duration-150
-  active:scale-95 disabled:opacity-50
-`;
+  // 👇 NUEVOS COMPONENTES UX
+  ServiceCard,
+  ServiceGrid,
+  FieldLabel,
+  PriceHighlight,
+  ServiceFooter,
+} from '@/Components/FormUI';
+
 
 export default function CreateServicio() {
   const { data, setData, post, processing } = useForm({
@@ -51,15 +50,19 @@ export default function CreateServicio() {
 
   const buscarCliente = async (valor) => {
     setData('cliente', valor);
-    if (valor.length < 2) return setMostrarSugerencias(false);
+    if (valor.length < 2) {
+      setMostrarSugerencias(false);
+      return;
+    }
 
     const res = await axios.get(
-      route('admin.clientes.sugerencias', { q: valor })
+      route('admin.clientes.sugerencias', { term: valor }) // ✅ CORRECTO
     );
 
     setSugerencias(res.data);
     setMostrarSugerencias(true);
   };
+
 
   const seleccionarCliente = (c) => {
     setData((prev) => ({
@@ -136,190 +139,167 @@ export default function CreateServicio() {
     post(route('admin.servicios.store'));
   };
 
-
   return (
     <AdminLayout>
       <Head title="Registrar Servicio Técnico" />
 
-      <div className="max-w-5xl mx-auto px-5 py-6 space-y-6">
+      <FormContainer>
+        {/* TÍTULO */}
+        <FormTitle>Servicio Técnico</FormTitle>
 
-        {/* HEADER */}
-        <header className="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-5 text-white shadow-md">
-          <h1 className="text-xl font-bold">Servicio Técnico</h1>
-          <p className="text-sm opacity-90">
-            Registro profesional de trabajos técnicos
-          </p>
-        </header>
+        <form onSubmit={handleSubmit}>
+          {/* ======================
+            CLIENTE
+        ====================== */}
+          <FormSectionTitle>Información del Cliente</FormSectionTitle>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            placeholder="Cliente"
+            value={data.cliente}
+            onChange={(e) => buscarCliente(e.target.value)}
+            onBlur={() => setTimeout(() => setMostrarSugerencias(false), 150)}
+          />
 
-          {/* CLIENTE */}
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-blue-400 mb-4">
-              Información del Cliente
-            </h2>
+          {mostrarSugerencias && sugerencias.length > 0 && (
+            <div
+              style={{
+                marginTop: 8,
+                background: '#fff',
+                borderRadius: 12,
+                boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
+                padding: 6,
+              }}
+            >
+              {sugerencias.map((c, i) => (
+                <SecondaryButton
+                  key={i}
+                  type="button"
+                  onMouseDown={() => seleccionarCliente(c)} // ✅ CLAVE
+                  style={{ display: 'block', width: '100%', textAlign: 'left' }}
+                >
+                  {c.nombre} — {c.telefono}
+                </SecondaryButton>
+              ))}
+            </div>
+          )}
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="relative">
-                <label className="text-xs text-slate-400 mb-1 block">
-                  Cliente
-                </label>
-                <input
-                  value={data.cliente}
-                  onChange={(e) => buscarCliente(e.target.value)}
-                  onBlur={() => setTimeout(() => setMostrarSugerencias(false), 150)}
-                  className={inputStyle}
-                  placeholder="Nombre del cliente"
-                />
+          <Input
+            placeholder="Teléfono"
+            value={data.telefono}
+            onChange={(e) => setData('telefono', e.target.value)}
+          />
 
-                {mostrarSugerencias && (
-                  <ul className="absolute z-20 w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg">
-                    {sugerencias.map((c, i) => (
-                      <li
-                        key={i}
-                        onClick={() => seleccionarCliente(c)}
-                        className="px-3 py-2 text-sm hover:bg-blue-600 cursor-pointer flex justify-between"
-                      >
-                        <span>{c.nombre}</span>
-                        <span className="text-slate-400">{c.telefono}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+          <Input
+            placeholder="Equipo"
+            value={data.equipo}
+            onChange={(e) => setData('equipo', e.target.value)}
+          />
 
-              {['telefono', 'equipo', 'tecnico'].map((f) => (
-                <div key={f}>
-                  <label className="text-xs text-slate-400 mb-1 block capitalize">
-                    {f}
-                  </label>
-                  <input
-                    value={data[f]}
-                    onChange={(e) => setData(f, e.target.value)}
-                    className={inputStyle}
+          <Input
+            placeholder="Técnico"
+            value={data.tecnico}
+            onChange={(e) => setData('tecnico', e.target.value)}
+          />
+
+          {/* ======================
+            SERVICIOS
+        ====================== */}
+          <FormSectionTitle>Detalle del Servicio</FormSectionTitle>
+
+          {servicios.map((s, i) => (
+            <ServiceCard key={i}>
+              <ServiceGrid>
+                {/* DESCRIPCIÓN */}
+                <div>
+                  <FieldLabel>Servicio</FieldLabel>
+                  <Input
+                    placeholder="Descripción del servicio"
+                    value={s.descripcion}
+                    onChange={(e) =>
+                      actualizarServicio(i, 'descripcion', e.target.value)
+                    }
                   />
                 </div>
-              ))}
-            </div>
-          </section>
 
-          {/* SERVICIOS */}
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-blue-400">
-                Detalle del Servicio
-              </h2>
-              <button
-                type="button"
-                onClick={agregarServicio}
-                className={`${btnBase} px-3 py-1.5 text-xs rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white`}
-              >
-                + Agregar ítem
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {servicios.map((s, i) => (
-                <div
-                  key={i}
-                  className="grid md:grid-cols-12 gap-3 bg-slate-800/40 p-3 rounded-xl"
-                >
-                  <div className="md:col-span-6">
-                    <label className="text-[10px] uppercase text-slate-400">
-                      Servicio
-                    </label>
-                    <input
-                      value={s.descripcion}
-                      onChange={(e) =>
-                        actualizarServicio(i, 'descripcion', e.target.value)
-                      }
-                      className={inputStyle}
-                    />
-                  </div>
-
-                  <div className="md:col-span-3">
-                    <label className="text-[10px] uppercase text-slate-400">
-                      Costo
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={s.costo}
-                      onChange={(e) =>
-                        actualizarServicio(i, 'costo', e.target.value)
-                      }
-                      className={inputStyle}
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="text-[10px] uppercase text-slate-400">
-                      Precio Cliente
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={s.precio}
-                      onChange={(e) =>
-                        actualizarServicio(i, 'precio', e.target.value)
-                      }
-                      className={inputStyle}
-                    />
-                  </div>
-
-                  <div className="md:col-span-1 flex items-end">
-                    <button
-                      type="button"
-                      onClick={() => eliminarServicio(i)}
-                      className="w-full h-9 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition"
-                    >
-                      ✕
-                    </button>
-                  </div>
+                {/* COSTO */}
+                <div>
+                  <FieldLabel>Costo</FieldLabel>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Costo"
+                    value={s.costo}
+                    onChange={(e) =>
+                      actualizarServicio(i, 'costo', e.target.value)
+                    }
+                  />
                 </div>
-              ))}
-            </div>
-          </section>
 
-          {/* NOTAS */}
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-blue-400 mb-3">
-              Notas adicionales
-            </h2>
-            <textarea
-              rows={3}
-              value={data.notas_adicionales}
-              onChange={(e) => setData('notas_adicionales', e.target.value)}
-              placeholder="Observaciones, condiciones, recomendaciones..."
-              className={inputStyle}
-            />
-          </section>
+                {/* PRECIO CLIENTE */}
+                <div>
+                  <FieldLabel>Precio Cliente</FieldLabel>
+                  <PriceHighlight
+                    type="number"
+                    min="0"
+                    placeholder="Precio"
+                    value={s.precio}
+                    onChange={(e) =>
+                      actualizarServicio(i, 'precio', e.target.value)
+                    }
+                  />
+                </div>
+              </ServiceGrid>
 
-          {/* FOOTER */}
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-slate-300">
-              <p>
-                Costo total:{' '}
-                <strong>Bs {totalCosto.toFixed(2)}</strong>
-              </p>
-              <p>
-                Cliente paga:{' '}
-                <strong className="text-green-400">
-                  Bs {totalVenta.toFixed(2)}
-                </strong>
-              </p>
-            </div>
+              <ServiceFooter>
+                <SecondaryButton
+                  type="button"
+                  onMouseDown={() => eliminarServicio(i)}
+                >
+                  Eliminar servicio
+                </SecondaryButton>
+              </ServiceFooter>
+            </ServiceCard>
+          ))}
 
-            <button
-              type="submit"
-              disabled={processing}
-              className={`${btnBase} px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm shadow-md`}
-            >
-              {processing ? 'Guardando…' : 'Guardar Servicio'} →
-            </button>
+          <PrimaryButton type="button" onClick={agregarServicio}>
+            + Agregar servicio
+          </PrimaryButton>
+
+
+          {/* ======================
+            NOTAS
+        ====================== */}
+          <FormSectionTitle>Notas adicionales</FormSectionTitle>
+
+          <Textarea
+            placeholder="Observaciones, condiciones, recomendaciones..."
+            value={data.notas_adicionales}
+            onChange={(e) =>
+              setData('notas_adicionales', e.target.value)
+            }
+          />
+
+          {/* ======================
+            TOTALES
+        ====================== */}
+          <div style={{ marginTop: 20, fontSize: 14 }}>
+            <p>
+              <strong>Costo total:</strong> Bs {totalCosto.toFixed(2)}
+            </p>
+            <p>
+              <strong>Cliente paga:</strong> Bs {totalVenta.toFixed(2)}
+            </p>
           </div>
+
+          {/* ======================
+            SUBMIT
+        ====================== */}
+          <PrimaryButton type="submit" disabled={processing}>
+            {processing ? 'Guardando…' : 'Guardar Servicio'}
+          </PrimaryButton>
         </form>
-      </div>
+      </FormContainer>
     </AdminLayout>
   );
+
 }

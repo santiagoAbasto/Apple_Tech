@@ -11,8 +11,8 @@ export default function WhatsappLote({ links }) {
   =============================== */
   const copiarMensaje = (item, index) => {
     const mensaje =
-      `Hola ${item.nombre}, gracias por confiar en *AppleBoss* 😊\n\n` +
-      `📝 *Cotización AppleBoss*\n` +
+      `Hola ${item.nombre}, gracias por confiar en *Apple Technology* 😊\n\n` +
+      `📝 *Cotización Apple Technology *\n` +
       `👤 Cliente: ${item.nombre}\n` +
       `📄 Cotización N.º: ${item.cotizacion_id}\n` +
       `💰 Total: Bs ${item.total}\n` +
@@ -71,13 +71,13 @@ export default function WhatsappLote({ links }) {
                       className="form-control form-control-sm mb-2 mensaje-preview"
                       rows="6"
                       readOnly
-                      value={`Hola ${item.nombre}, gracias por confiar en *AppleBoss* 😊
+                      value={`Hola ${item.nombre}, gracias por confiar en *Apple Technology* 😊
 
-📝 Cotización AppleBoss
-👤 Cliente: ${item.nombre}
-📄 Cotización N.º: ${item.cotizacion_id}
-💰 Total: Bs ${item.total}
-🔗 Ver PDF: ${item.pdf}`}
+                        📝 Cotización Apple Technology
+                        👤 Cliente: ${item.nombre}
+                        📄 Cotización N.º: ${item.cotizacion_id}
+                        💰 Total: Bs ${item.total}
+                        🔗 Ver PDF: ${item.pdf}`}
                     />
 
                     {copiado === index && (

@@ -95,7 +95,13 @@ class CotizacionController extends Controller
             'correo_cliente' => 'nullable|email|max:255',
             'fecha_cotizacion' => 'required|date',
             'items' => 'required|array|min:1',
-            'descuento' => 'nullable|numeric|min:0',
+            'items.*.nombre' => 'required|string',
+            'items.*.cantidad' => 'required|integer|min:1',
+            'items.*.precio_sin_factura' => 'required|numeric|min:0',
+            'items.*.descuento' => 'nullable|numeric|min:0',
+            'items.*.iva' => 'required|numeric|min:0',
+            'items.*.it' => 'required|numeric|min:0',
+            'items.*.total' => 'required|numeric|min:0',
         ]);
 
         $telefono = preg_replace('/\D/', '', $request->telefono_completo);
@@ -115,12 +121,14 @@ class CotizacionController extends Controller
             'nombre' => $i['nombre'],
             'cantidad' => (int) $i['cantidad'],
             'precio_sin_factura' => (float) $i['precio_sin_factura'],
-            'precio_con_factura' => (float) $i['precio_con_factura'],
-        ]);
+            'descuento' => (float) ($i['descuento'] ?? 0),
+            'iva' => (float) $i['iva'],
+            'it' => (float) $i['it'],
+            'total' => (float) $i['total'],
+        ])->toArray();
 
-        $subtotal = $items->sum(fn($i) => $i['precio_con_factura'] * $i['cantidad']);
-        $descuento = (float) ($request->descuento ?? 0);
-        $total = max(0, $subtotal - $descuento);
+        $total = collect($items)->sum('total');
+
 
         $cotizacion = Cotizacion::create([
             'user_id' => Auth::id(),
@@ -131,7 +139,6 @@ class CotizacionController extends Controller
             'fecha_cotizacion' => $request->fecha_cotizacion,
             'notas_adicionales' => $request->notas_adicionales ?? '',
             'items' => $items,
-            'descuento' => $descuento,
             'total' => $total,
         ]);
 
@@ -251,5 +258,32 @@ class CotizacionController extends Controller
                 : 'Vendedor/Cotizaciones/WhatsappLote',
             ['links' => $links]
         );
+    }
+    /* ======================================================
+   REENVIAR COTIZACIÓN POR CORREO
+====================================================== */
+    /* ======================================================
+   REENVIAR CORREO (ADMIN + VENDEDOR)
+====================================================== */
+    public function reenviarCorreo($id)
+    {
+        $cotizacion = Cotizacion::findOrFail($id);
+
+        // 🔐 Seguridad por rol
+        if (auth()->user()->rol === 'vendedor' && $cotizacion->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // 📧 Reenviar correo
+        if ($cotizacion->correo_cliente) {
+            Mail::to($cotizacion->correo_cliente)
+                ->queue(new CotizacionMailable($cotizacion));
+
+            $cotizacion->update([
+                'enviado_por_correo' => true,
+            ]);
+        }
+
+        return back()->with('success', 'Cotización reenviada por correo.');
     }
 }

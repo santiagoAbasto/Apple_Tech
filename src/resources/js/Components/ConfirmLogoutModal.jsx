@@ -4,12 +4,28 @@ import styled from 'styled-components';
 export default function ConfirmLogoutModal({ open, onClose, onConfirm }) {
   if (!open) return null;
 
+  // 🔍 Detectar contexto por URL
+  const pathname =
+    typeof window !== 'undefined' ? window.location.pathname : '';
+
+  const isAdmin = pathname.startsWith('/admin');
+  const isVendedor = pathname.startsWith('/vendedor');
+
+  const panelName = isAdmin
+    ? 'panel de administración'
+    : isVendedor
+      ? 'panel del vendedor'
+      : 'panel';
+
+  const titleColor = isAdmin ? '#1e3a8a' : '#064e3b'; // azul admin | verde vendedor
+
   return (
     <Overlay>
-      <Modal>
+      <Modal $titleColor={titleColor}>
         <h3>¿Cerrar sesión?</h3>
+
         <p>
-          Estás a punto de salir del panel del vendedor.
+          Estás a punto de salir del <strong>{panelName}</strong>.
           <br />
           ¿Deseas continuar?
         </p>
@@ -27,6 +43,8 @@ export default function ConfirmLogoutModal({ open, onClose, onConfirm }) {
     </Overlay>
   );
 }
+
+/* ================= ESTILOS ================= */
 
 const Overlay = styled.div`
   position: fixed;
@@ -51,7 +69,7 @@ const Modal = styled.div`
   h3 {
     font-size: 18px;
     font-weight: 700;
-    color: #064e3b;
+    color: ${({ $titleColor }) => $titleColor};
     margin-bottom: 6px;
   }
 

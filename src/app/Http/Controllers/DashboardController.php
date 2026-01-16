@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Venta;
-use App\Models\ServicioTecnico; // 🔧 NUEVO
+use App\Models\ServicioTecnico;
 use App\Models\Celular;
 use App\Models\Computadora;
 use App\Models\ProductoGeneral;
@@ -12,13 +12,20 @@ use App\Models\Egreso;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $fechaInicio = request('fecha_inicio') ?? now()->toDateString();
-        $fechaFin    = request('fecha_fin') ?? now()->toDateString();
+        $fechaInicio = request('fecha_inicio');
+        $fechaFin    = request('fecha_fin');
+
+        if (!$fechaInicio || !$fechaFin) {
+            $fechaInicio = Venta::min('fecha') ?? now()->toDateString();
+            $fechaFin    = now()->toDateString();
+        }
+
         $vendedorId  = request('vendedor_id');
 
         /* =========================
@@ -42,7 +49,7 @@ class DashboardController extends Controller
         /* =========================
          * SERVICIOS TÉCNICOS REALES
          * ========================= */
-        $serviciosTecnicos = ServicioTecnico::with('vendedor') // 🔧 NUEVO
+        $serviciosTecnicos = ServicioTecnico::with('vendedor')
             ->when($vendedorId, fn($q) => $q->where('user_id', $vendedorId))
             ->whereBetween('fecha', [$fechaInicio, $fechaFin])
             ->get();
@@ -148,15 +155,13 @@ class DashboardController extends Controller
             ]);
         }
 
-
         // =========================
-        // 🔻 Egresos (día/mes/año)
+        // 🔻 EGRESOS (día/mes/año)  ✅ ANTES DEL HISTÓRICO
         // =========================
         $egresosCollection = Egreso::whereBetween('created_at', [
             $fechaInicio . ' 00:00:00',
             $fechaFin    . ' 23:59:59',
-        ])
-            ->get(['created_at', 'precio_invertido']); // Asegúrate que el campo sea precio_invertido
+        ])->get(['created_at', 'precio_invertido']);
 
         // Por día (YYYY-MM-DD)
         $egresosPorDia = $egresosCollection
@@ -174,6 +179,60 @@ class DashboardController extends Controller
             ->map(fn($grp) => $grp->sum('precio_invertido'));
 
         $totalEgresos = $egresosCollection->sum('precio_invertido');
+
+        /* =====================================================
+         * 📈 HISTÓRICO PARA SVG (DÍA / MES / AÑO) ✅ POST-EGRESOS
+         * - CLAVE: utilidad = ganancia - egresos del periodo
+         * ===================================================== */
+
+        // 📅 DÍA → agrupado por día (para que el chart tenga "base" real por día)
+        $historicoDia = $items
+            ->sortBy('fecha')
+            ->values()
+            ->map(function ($i) use ($egresosPorDia) {
+                $fecha = Carbon::parse($i['fecha'])->toDateString();
+                $egresoDia = $egresosPorDia[$fecha] ?? 0;
+
+                return [
+                    'fecha'    => Carbon::parse($i['fecha'])->toDateTimeString(),
+                    'total'    => $i['subtotal'],
+                    'capital'  => $i['capital'],
+                    // 🔴 CLAVE: utilidad real por movimiento
+                    'utilidad' => $i['ganancia'] - $egresoDia,
+                ];
+            });
+
+        // 📆 MES → por DÍA (utilidad diaria post-egresos)
+        $historicoMes = $items
+            ->groupBy(fn($i) => Carbon::parse($i['fecha'])->toDateString())
+            ->map(function ($grp, $fecha) use ($egresosPorDia) {
+                $gananciaDia = $grp->sum('ganancia');
+                $egresoDia   = $egresosPorDia[$fecha] ?? 0;
+
+                return [
+                    'fecha'    => $fecha,
+                    'total'    => $grp->sum('subtotal'),
+                    'capital'  => $grp->sum('capital'),
+                    'utilidad' => $gananciaDia - $egresoDia, // 🔴 post-egresos por día
+                ];
+            })
+            ->values();
+
+        // 📈 AÑO → por MES (utilidad mensual post-egresos)
+        $historicoAnio = $items
+            ->groupBy(fn($i) => Carbon::parse($i['fecha'])->format('Y-m'))
+            ->map(function ($grp, $ym) use ($egresosPorMes) {
+                $gananciaMes = $grp->sum('ganancia');
+                $egresoMes   = $egresosPorMes[$ym] ?? 0;
+
+                return [
+                    'fecha'    => $ym . '-01',
+                    'total'    => $grp->sum('subtotal'),
+                    'capital'  => $grp->sum('capital'),
+                    'utilidad' => $gananciaMes - $egresoMes, // 🔴 post-egresos por mes
+                ];
+            })
+            ->values();
 
         $gananciaNeta       = $items->sum('ganancia');
         $utilidadDisponible = $gananciaNeta - $totalEgresos;
@@ -217,7 +276,6 @@ class DashboardController extends Controller
 
         // =========================
         // 🔸 Distribución económica
-        //    (ganancia ya post egresos)
         // =========================
         $distribucionEconomica = [
             [
@@ -236,7 +294,6 @@ class DashboardController extends Controller
                 'label' => 'Utilidad (post egresos)',
                 'valor' => max($utilidadDisponible, 0),
             ],
-            // Si prefieres visualizar egresos como porción separada, descomenta:
             // [
             //     'label' => 'Egresos',
             //     'valor' => $totalEgresos,
@@ -284,12 +341,17 @@ class DashboardController extends Controller
             'distribucion_economica' => $distribucionEconomica,
 
             'resumen_grafico' => $resumenGrafico,
+            'historico' => [
+                'dia'  => $historicoDia,
+                'mes'  => $historicoMes,
+                'anio' => $historicoAnio,
+            ],
 
             // 🔹 Egresos agrupados para usar en tabs/filtros del front (día/mes/año)
             'egresos_agrupados' => [
-                'por_dia'  => $egresosPorDia,   // ['2025-09-01' => 150, ...]
-                'por_mes'  => $egresosPorMes,   // ['2025-09' => 900, ...]
-                'por_anio' => $egresosPorAnio,  // ['2025' => 12345, ...]
+                'por_dia'  => $egresosPorDia,
+                'por_mes'  => $egresosPorMes,
+                'por_anio' => $egresosPorAnio,
             ],
 
             'vendedores' => User::where('rol', 'vendedor')->select('id', 'name')->get(),

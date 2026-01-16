@@ -8,3 +8,16 @@
   }
 }
 
+/* Dona blanca por defecto */
+.apexcharts-pie-series path {
+  fill-opacity: 0.08;
+  transition: fill-opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+  cursor: pointer;
+}
+
+/* Hover = se pinta con su color REAL */
+.apexcharts-pie-series path:hover {
+  fill-opacity: 1;
+  transform: scale(1.015);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+}

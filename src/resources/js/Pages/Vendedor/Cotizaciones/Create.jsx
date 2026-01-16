@@ -25,7 +25,6 @@ export default function Create({
     correo_cliente: '',
     fecha_cotizacion: fechaHoy,
     items: [],
-    descuento: 0,
     total: 0,
     notas_adicionales: '',
   });
@@ -34,7 +33,9 @@ export default function Create({
     nombre: '',
     cantidad: 1,
     precio: 0,
+    descuento: 0, // 👈 NUEVO
   });
+
 
   const [tipoItem, setTipoItem] = useState('producto');
 
@@ -110,44 +111,79 @@ export default function Create({
   /* ===============================
      CÁLCULOS
   =============================== */
-  const calcularTotal = (items, descuento) => {
-    const subtotal = items.reduce(
-      (acc, item) => acc + item.cantidad * item.precio_con_factura,
-      0
+  const calcularTotales = (items) => {
+    return items.reduce(
+      (acc, item) => {
+        acc.subtotalSinFactura += item.cantidad * item.precio_sin_factura;
+        acc.descuentos += item.descuento;
+        acc.iva += item.iva;
+        acc.it += item.it;
+        acc.total += item.total;
+        return acc;
+      },
+      {
+        subtotalSinFactura: 0,
+        descuentos: 0,
+        iva: 0,
+        it: 0,
+        total: 0,
+      }
     );
-    return Math.max(subtotal - descuento, 0);
   };
 
-  const subtotalActual = calcularTotal(data.items, 0);
+  const resumen = calcularTotales(data.items);
 
   /* ===============================
      ITEMS
   =============================== */
   const agregarItem = () => {
-    if (!nuevoItem.nombre || nuevoItem.cantidad <= 0 || nuevoItem.precio <= 0)
-      return;
+    if (
+      !nuevoItem.nombre ||
+      nuevoItem.cantidad <= 0 ||
+      nuevoItem.precio <= 0
+    ) return;
 
-    const sinFactura = nuevoItem.precio;
-    const conFactura = parseFloat((sinFactura * 1.16).toFixed(2));
+    const base = nuevoItem.precio * nuevoItem.cantidad;
+    const descuento = Math.min(nuevoItem.descuento || 0, base);
+
+    const baseConDescuento = base - descuento;
+
+    const iva = parseFloat((baseConDescuento * 0.13).toFixed(2));
+    const it = parseFloat((baseConDescuento * 0.03).toFixed(2));
+
+    const total = parseFloat(
+      (baseConDescuento + iva + it).toFixed(2)
+    );
 
     const item = {
       nombre: nuevoItem.nombre,
       cantidad: nuevoItem.cantidad,
-      precio_sin_factura: sinFactura,
-      precio_con_factura: conFactura,
+      precio_sin_factura: nuevoItem.precio,
+      descuento,
+      iva,
+      it,
+      precio_con_factura: baseConDescuento + iva + it,
+      total,
     };
 
     const nuevosItems = [...data.items, item];
     setData('items', nuevosItems);
-    setNuevoItem({ nombre: '', cantidad: 1, precio: 0 });
-    setData('total', calcularTotal(nuevosItems, data.descuento));
+    setData('total', calcularTotales(nuevosItems).total);
+
+    setNuevoItem({
+      nombre: '',
+      cantidad: 1,
+      precio: 0,
+      descuento: 0,
+    });
   };
 
   const eliminarItem = (index) => {
     const nuevosItems = data.items.filter((_, i) => i !== index);
     setData('items', nuevosItems);
-    setData('total', calcularTotal(nuevosItems, data.descuento));
+    setData('total', calcularTotales(nuevosItems).total);
   };
+
 
   const handleProductoSeleccionado = (tipo, id) => {
     if (!id) return;
@@ -163,9 +199,11 @@ export default function Create({
         nombre: p.modelo || p.nombre,
         cantidad: 1,
         precio: parseFloat(p.precio_venta || 0),
+        descuento: 0,
       });
     }
   };
+
 
   /* ===============================
      SUBMIT
@@ -351,53 +389,139 @@ export default function Create({
         </div>
 
         {/* ===============================
-           NUEVO ÍTEM
-        =============================== */}
+   NUEVO ÍTEM
+=============================== */}
         <div className="border rounded-lg p-4 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-700">Agregar ítem</h2>
+          <h2 className="text-sm font-semibold text-gray-700">
+            Agregar ítem
+          </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <input className="input" placeholder="Descripción" value={nuevoItem.nombre}
-              onChange={(e) => setNuevoItem({ ...nuevoItem, nombre: e.target.value })}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            {/* DESCRIPCIÓN */}
+            <input
+              className="input"
+              placeholder="Descripción del producto o servicio"
+              value={nuevoItem.nombre}
+              onChange={(e) =>
+                setNuevoItem({ ...nuevoItem, nombre: e.target.value })
+              }
             />
-            <input type="number" className="input" placeholder="Cantidad" value={nuevoItem.cantidad}
-              onChange={(e) => setNuevoItem({ ...nuevoItem, cantidad: Number(e.target.value) || 1 })}
+
+            {/* CANTIDAD */}
+            <input
+              type="number"
+              min="1"
+              className="input"
+              placeholder="Cantidad"
+              value={nuevoItem.cantidad}
+              onChange={(e) =>
+                setNuevoItem({
+                  ...nuevoItem,
+                  cantidad: Number(e.target.value) || 1,
+                })
+              }
             />
-            <input type="number" className="input" placeholder="Precio Base" value={nuevoItem.precio}
-              onChange={(e) => setNuevoItem({ ...nuevoItem, precio: Number(e.target.value) || 0 })}
+
+            {/* PRECIO BASE */}
+            <input
+              type="number"
+              min="0"
+              className="input"
+              placeholder="Precio sin factura"
+              value={nuevoItem.precio}
+              onChange={(e) =>
+                setNuevoItem({
+                  ...nuevoItem,
+                  precio: Number(e.target.value) || 0,
+                })
+              }
             />
-            <FancyButton type="button" onClick={agregarItem}>Agregar</FancyButton>
+
+            {/* DESCUENTO POR ÍTEM */}
+            <input
+              type="number"
+              min="0"
+              className="input"
+              placeholder="Descuento"
+              value={nuevoItem.descuento}
+              onChange={(e) =>
+                setNuevoItem({
+                  ...nuevoItem,
+                  descuento: Number(e.target.value) || 0,
+                })
+              }
+            />
+
+            {/* BOTÓN */}
+            <FancyButton type="button" onClick={agregarItem}>
+              Agregar
+            </FancyButton>
           </div>
         </div>
 
         {/* ===============================
-           TABLA + TOTALES
-        =============================== */}
+   TABLA + TOTALES (CORREGIDO)
+=============================== */}
         <div className="border rounded-lg p-4 space-y-4">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="px-3 py-2">Descripción</th>
-                  <th className="px-3 py-2">Cant.</th>
-                  <th className="px-3 py-2">P. Neto</th>
-                  <th className="px-3 py-2">P. Factura</th>
-                  <th className="px-3 py-2">Total</th>
+                  <th className="px-3 py-2 text-left">Descripción</th>
+                  <th className="px-3 py-2 text-center">Cant.</th>
+                  <th className="px-3 py-2 text-right">Precio Base</th>
+                  <th className="px-3 py-2 text-right">Descuento</th>
+                  <th className="px-3 py-2 text-right">IVA 13%</th>
+                  <th className="px-3 py-2 text-right">IT 3%</th>
+                  <th className="px-3 py-2 text-right font-semibold">Total</th>
                   <th />
                 </tr>
               </thead>
+
               <tbody>
+                {data.items.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="text-center py-6 text-gray-400"
+                    >
+                      No hay ítems agregados
+                    </td>
+                  </tr>
+                )}
+
                 {data.items.map((item, i) => (
                   <tr key={i} className="border-t">
                     <td className="px-3 py-2">{item.nombre}</td>
-                    <td className="px-3 py-2">{item.cantidad}</td>
-                    <td className="px-3 py-2">{item.precio_sin_factura}</td>
-                    <td className="px-3 py-2">{item.precio_con_factura}</td>
-                    <td className="px-3 py-2 font-semibold">
-                      {(item.cantidad * item.precio_con_factura).toFixed(2)}
+                    <td className="px-3 py-2 text-center">
+                      {item.cantidad}
                     </td>
+
+                    <td className="px-3 py-2 text-right">
+                      Bs {(item.precio_sin_factura * item.cantidad).toFixed(2)}
+                    </td>
+
+                    <td className="px-3 py-2 text-right text-red-600">
+                      - Bs {item.descuento.toFixed(2)}
+                    </td>
+
+                    <td className="px-3 py-2 text-right">
+                      Bs {item.iva.toFixed(2)}
+                    </td>
+
+                    <td className="px-3 py-2 text-right">
+                      Bs {item.it.toFixed(2)}
+                    </td>
+
+                    <td className="px-3 py-2 text-right font-semibold">
+                      Bs {item.total.toFixed(2)}
+                    </td>
+
                     <td className="px-2 text-center">
-                      <button type="button" onClick={() => eliminarItem(i)}>
+                      <button
+                        type="button"
+                        onClick={() => eliminarItem(i)}
+                      >
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </button>
                     </td>
@@ -407,26 +531,42 @@ export default function Create({
             </table>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="md:w-1/2">
-              <label className="label">Descuento (Bs)</label>
-              <input
-                type="number"
-                className="input"
-                value={data.descuento}
-                onChange={(e) => {
-                  const v = Number(e.target.value) || 0;
-                  const d = Math.min(v, subtotalActual);
-                  setData('descuento', d);
-                  setData('total', calcularTotal(data.items, d));
-                }}
-              />
-            </div>
+          {/* ===============================
+     RESUMEN GENERAL
+  =============================== */}
+          <div className="flex flex-col md:flex-row justify-end gap-6 mt-4">
+            <div className="text-right space-y-1 text-sm">
+              <p>
+                Subtotal sin factura:{' '}
+                <strong>
+                  Bs {resumen.subtotalSinFactura.toFixed(2)}
+                </strong>
+              </p>
 
-            <div className="text-right space-y-1">
-              <p>Subtotal: <strong>Bs {subtotalActual.toFixed(2)}</strong></p>
-              <p>Descuento: <strong>Bs {data.descuento.toFixed(2)}</strong></p>
-              <p className="text-lg font-bold">Total: Bs {data.total.toFixed(2)}</p>
+              <p>
+                Descuentos aplicados:{' '}
+                <strong className="text-red-600">
+                  - Bs {resumen.descuentos.toFixed(2)}
+                </strong>
+              </p>
+
+              <p>
+                IVA 13%:{' '}
+                <strong>
+                  Bs {resumen.iva.toFixed(2)}
+                </strong>
+              </p>
+
+              <p>
+                IT 3%:{' '}
+                <strong>
+                  Bs {resumen.it.toFixed(2)}
+                </strong>
+              </p>
+
+              <p className="text-lg font-bold mt-2">
+                TOTAL A PAGAR: Bs {resumen.total.toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
