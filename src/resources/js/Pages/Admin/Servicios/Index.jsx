@@ -4,6 +4,25 @@ import { useState } from 'react';
 import dayjs from 'dayjs';
 import { route } from 'ziggy-js';
 import axios from 'axios';
+import { Wrench, Search, FileText, PlusCircle, Printer } from 'lucide-react';
+
+/* =======================
+   CRUD UI
+======================= */
+import {
+  CrudWrapper,
+  CrudHeader,
+  CrudTitle,
+  CrudSubtitle,
+  CrudCard,
+  CrudSectionTitle,
+  CrudGrid,
+  CrudLabel,
+  CrudInput,
+  CrudActions,
+  CrudButtonPrimary,
+  CrudButtonSecondary,
+} from '@/Components/CrudUI';
 
 export default function ServiciosIndex({ servicios = [], filtros = {}, vendedores = [] }) {
   const [fechaInicio, setFechaInicio] = useState(filtros.fecha_inicio || '');
@@ -11,7 +30,6 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
   const [vendedorId, setVendedorId] = useState(filtros.vendedor_id || '');
   const [buscar, setBuscar] = useState('');
   const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
-
 
   const handleFiltrar = (e) => {
     e.preventDefault();
@@ -28,7 +46,11 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
       fecha_fin: fechaFin,
       vendedor_id: vendedorId,
     }).toString();
-    window.open(route('admin.servicios.exportarFiltrado') + '?' + queryParams, '_blank');
+
+    window.open(
+      route('admin.servicios.exportarFiltrado') + '?' + queryParams,
+      '_blank'
+    );
   };
 
   const buscarServicio = async (e) => {
@@ -46,174 +68,267 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
     }
   };
 
-
-
-  const listaFinal = resultadosBusqueda !== null ? resultadosBusqueda : servicios;
+  const listaFinal =
+    resultadosBusqueda !== null ? resultadosBusqueda : servicios;
 
   return (
     <AdminLayout>
       <Head title="Servicios Técnicos" />
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">🧰 Servicios Técnicos</h1>
-        <div className="flex gap-3 mt-4 md:mt-0">
-          <Link
-            href={route('admin.servicios.create')}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition"
-          >
-            ➕ Registrar Servicio
-          </Link>
-          <button
-            onClick={handleExportarFiltrado}
-            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow transition"
-          >
-            🧾 Exportar PDF Filtrado
-          </button>
-        </div>
-      </div>
+      <CrudWrapper>
+        {/* ================= HEADER ================= */}
+        <CrudHeader>
+          <div>
+            <CrudTitle>
+              <Wrench size={22} />
+              Servicios Técnicos
+            </CrudTitle>
+            <CrudSubtitle>
+              Gestión, filtrado y exportación de servicios técnicos
+            </CrudSubtitle>
+          </div>
 
-      <form onSubmit={buscarServicio} className="flex items-center gap-2 mb-6">
-        <input
-          type="text"
-          value={buscar}
-          onChange={(e) => setBuscar(e.target.value)}
-          placeholder="Buscar por código o nombre del cliente"
-          className="border px-3 py-2 rounded w-80"
-        />
-        <button
-          type="submit"
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-          Buscar
-        </button>
-      </form>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <CrudButtonPrimary
+              as={Link}
+              href={route('admin.servicios.create')}
+            >
+              <PlusCircle size={18} />
+              Registrar Servicio
+            </CrudButtonPrimary>
 
-      <form
-        onSubmit={handleFiltrar}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-md mb-6"
-      >
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Inicio</label>
-          <input
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => setFechaInicio(e.target.value)}
-            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Fin</label>
-          <input
-            type="date"
-            value={fechaFin}
-            onChange={(e) => setFechaFin(e.target.value)}
-            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vendedor</label>
-          <select
-            value={vendedorId}
-            onChange={(e) => setVendedorId(e.target.value)}
-            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm"
-          >
-            <option value="">— Todos —</option>
-            {vendedores.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-end">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition"
-          >
-            🔎 Filtrar
-          </button>
-        </div>
-      </form>
+            <CrudButtonSecondary
+              type="button"
+              onClick={handleExportarFiltrado}
+            >
+              <FileText size={16} />
+              Exportar PDF
+            </CrudButtonSecondary>
+          </div>
+        </CrudHeader>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl overflow-x-auto">
-        <table className="w-full table-auto text-sm text-left text-gray-800 dark:text-gray-100">
-          <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase">
-            <tr>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Código Nota</th>
-              <th className="px-4 py-3">Equipo</th>
-              <th className="px-4 py-3">Técnico</th>
-              <th className="px-4 py-3 text-right">Costo</th>
-              <th className="px-4 py-3 text-right">Venta</th>
-              <th className="px-4 py-3 text-right">Ganancia</th>
-              <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Registrado por</th>
-              <th className="px-4 py-3 text-center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listaFinal.length > 0 ? (
-              listaFinal.map((s) => {
-                const costo = parseFloat(s.precio_costo || 0);
-                const venta = parseFloat(s.precio_venta || 0);
-                const ganancia = venta - costo;
+        {/* ================= BUSCADOR ================= */}
+        <CrudCard style={{ marginBottom: 22 }}>
+          <form onSubmit={buscarServicio}>
+            <CrudSectionTitle>
+              <Search size={14} style={{ marginRight: 6 }} />
+              Buscar servicio
+            </CrudSectionTitle>
 
-                return (
-                  <tr
-                    key={s.id}
-                    className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                  >
-                    <td className="px-4 py-3">{s.cliente}</td>
-                    <td className="px-4 py-3 text-blue-700 font-mono">{s.codigo_nota || '—'}</td>
-                    <td className="px-4 py-3">{s.equipo}</td>
-                    <td className="px-4 py-3">{s.tecnico}</td>
-                    <td className="px-4 py-3 text-right">{costo.toFixed(2)} Bs</td>
-                    <td className="px-4 py-3 text-right">{venta.toFixed(2)} Bs</td>
-                    <td className="px-4 py-3 text-right text-green-600 font-semibold">{ganancia.toFixed(2)} Bs</td>
-                    <td className="px-4 py-3">{dayjs(s.fecha).format('DD/MM/YYYY')}</td>
-                    <td className="px-4 py-3">{s.vendedor?.name || '—'}</td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
+            <CrudGrid>
+              <div>
+                <CrudLabel>Código de nota o cliente</CrudLabel>
+                <CrudInput
+                  placeholder="Ej: ST-2024-015"
+                  value={buscar}
+                  onChange={(e) => setBuscar(e.target.value)}
+                />
+              </div>
+            </CrudGrid>
 
-                        {/* VER NOTA A4 */}
-                        <a
-                          href={route('admin.servicios.boleta', { servicio: s.id })}
-                          target="_blank"
-                          className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+            <CrudActions>
+              <CrudButtonPrimary type="submit">
+                Buscar
+              </CrudButtonPrimary>
+            </CrudActions>
+          </form>
+        </CrudCard>
+
+        {/* ================= FILTROS ================= */}
+        <CrudCard style={{ marginBottom: 22 }}>
+          <CrudSectionTitle>Filtros avanzados</CrudSectionTitle>
+
+          <form onSubmit={handleFiltrar}>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+
+              {/* FECHA INICIO */}
+              <div className="md:col-span-2">
+                <CrudLabel>Fecha inicio</CrudLabel>
+                <CrudInput
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                />
+              </div>
+
+              {/* FECHA FIN */}
+              <div className="md:col-span-2">
+                <CrudLabel>Fecha fin</CrudLabel>
+                <CrudInput
+                  type="date"
+                  value={fechaFin}
+                  onChange={(e) => setFechaFin(e.target.value)}
+                />
+              </div>
+
+              {/* BOTÓN */}
+              <div className="md:col-span-1">
+                <button
+                  type="submit"
+                  className="
+            w-full
+            h-[42px]
+            bg-blue-600
+            hover:bg-blue-700
+            text-white
+            font-semibold
+            rounded-lg
+            shadow
+            transition
+          "
+                >
+                  Filtrar
+                </button>
+              </div>
+
+              {/* VENDEDOR */}
+              <div className="md:col-span-2">
+                <CrudLabel>Vendedor</CrudLabel>
+                <select
+                  value={vendedorId}
+                  onChange={(e) => setVendedorId(e.target.value)}
+                  className="crud-input"
+                >
+                  <option value="">— Todos —</option>
+                  {vendedores.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+            </div>
+          </form>
+        </CrudCard>
+
+        {/* ================= TABLA ================= */}
+        <CrudCard>
+          <CrudSectionTitle>Listado de servicios</CrudSectionTitle>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#1e40af', color: '#fff' }}>
+                  {[
+                    'Cliente',
+                    'Código',
+                    'Equipo',
+                    'Técnico',
+                    'Costo',
+                    'Venta',
+                    'Ganancia',
+                    'Fecha',
+                    'Registrado por',
+                    'Acciones',
+                  ].map((h) => (
+                    <th key={h} style={thWhite}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {listaFinal.length > 0 ? (
+                  listaFinal.map((s) => {
+                    const costo = parseFloat(s.precio_costo || 0);
+                    const venta = parseFloat(s.precio_venta || 0);
+                    const ganancia = venta - costo;
+
+                    return (
+                      <tr
+                        key={s.id}
+                        style={{ borderTop: '1px solid #e5e7eb' }}
+                      >
+                        <td style={td}>{s.cliente}</td>
+                        <td style={{ ...td, fontFamily: 'monospace', color: '#1d4ed8' }}>
+                          {s.codigo_nota || '—'}
+                        </td>
+                        <td style={td}>{s.equipo}</td>
+                        <td style={td}>{s.tecnico}</td>
+                        <td style={{ ...td, textAlign: 'right' }}>
+                          {costo.toFixed(2)} Bs
+                        </td>
+                        <td style={{ ...td, textAlign: 'right' }}>
+                          {venta.toFixed(2)} Bs
+                        </td>
+                        <td
+                          style={{
+                            ...td,
+                            textAlign: 'right',
+                            fontWeight: 700,
+                            color: '#16a34a',
+                          }}
                         >
-                          📄 Ver
-                        </a>
+                          {ganancia.toFixed(2)} Bs
+                        </td>
+                        <td style={td}>
+                          {dayjs(s.fecha).format('DD/MM/YYYY')}
+                        </td>
+                        <td style={td}>{s.vendedor?.name || '—'}</td>
+                        <td style={{ ...td, textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                            <a
+                              href={route('admin.servicios.boleta', { servicio: s.id })}
+                              target="_blank"
+                              className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            >
+                              <FileText size={12} />
+                            </a>
 
-                        {/* IMPRIMIR 80 MM */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            window.open(
-                              route('admin.servicios.recibo80mm', { servicio: s.id }),
-                              '_blank'
-                            )
-                          }
-                          className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-                          title="Imprimir recibo térmico 80mm"
-                        >
-                          🖨️ Imprimir
-                        </button>
-
-                      </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                window.open(
+                                  route('admin.servicios.recibo80mm', { servicio: s.id }),
+                                  '_blank'
+                                )
+                              }
+                              className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            >
+                              <Printer size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      style={{
+                        padding: 20,
+                        textAlign: 'center',
+                        color: '#64748b',
+                      }}
+                    >
+                      No hay servicios registrados.
                     </td>
                   </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan="10" className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                  No hay servicios registrados.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CrudCard>
+      </CrudWrapper>
     </AdminLayout>
   );
 }
+
+/* ===============================
+   TABLE STYLES
+=============================== */
+const thWhite = {
+  padding: '12px 14px',
+  fontSize: 12,
+  fontWeight: 800,
+  textAlign: 'left',
+};
+
+const td = {
+  padding: '12px 14px',
+  fontSize: 14,
+  color: '#334155',
+};
