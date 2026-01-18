@@ -22,6 +22,7 @@ import {
   CrudActions,
   CrudButtonPrimary,
   CrudButtonSecondary,
+  CrudSelect,
 } from '@/Components/CrudUI';
 
 export default function ServiciosIndex({ servicios = [], filtros = {}, vendedores = [] }) {
@@ -138,8 +139,10 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
         <CrudCard style={{ marginBottom: 22 }}>
           <CrudSectionTitle>Filtros avanzados</CrudSectionTitle>
 
-          <form onSubmit={handleFiltrar}>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <form onSubmit={handleFiltrar} className="space-y-6">
+
+            {/* ================= FILA 1: FECHAS + BOTÓN ================= */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-5 items-end">
 
               {/* FECHA INICIO */}
               <div className="md:col-span-2">
@@ -161,46 +164,57 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                 />
               </div>
 
-              {/* BOTÓN */}
+              {/* BOTÓN FILTRAR */}
               <div className="md:col-span-1">
-                <button
+                <CrudButtonPrimary
                   type="submit"
-                  className="
-            w-full
-            h-[42px]
-            bg-blue-600
-            hover:bg-blue-700
-            text-white
-            font-semibold
-            rounded-lg
-            shadow
-            transition
-          "
+                  style={{ width: '100%', height: 42 }}
                 >
                   Filtrar
-                </button>
+                </CrudButtonPrimary>
               </div>
+            </div>
 
-              {/* VENDEDOR */}
-              <div className="md:col-span-2">
+            {/* ================= FILA 2: VENDEDOR ================= */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+              <div className="md:col-span-1">
                 <CrudLabel>Vendedor</CrudLabel>
-                <select
-                  value={vendedorId}
-                  onChange={(e) => setVendedorId(e.target.value)}
-                  className="crud-input"
-                >
-                  <option value="">— Todos —</option>
-                  {vendedores.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name}
-                    </option>
-                  ))}
-                </select>
+
+                <div style={{ position: 'relative' }}>
+                  <CrudSelect
+                    value={vendedorId}
+                    onChange={(e) => setVendedorId(e.target.value)}
+                  >
+                    <option value="">— Todos —</option>
+                    {vendedores.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </CrudSelect>
+
+                  {/* Flecha custom */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: 14,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none',
+                      fontSize: 12,
+                      color: '#64748b',
+                    }}
+                  >
+                    ▼
+                  </span>
+                </div>
               </div>
 
             </div>
           </form>
         </CrudCard>
+
 
         {/* ================= TABLA ================= */}
         <CrudCard>

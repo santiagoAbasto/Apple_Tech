@@ -131,15 +131,23 @@ export const CrudInput = styled.input`
 
 export const CrudSelect = styled.select`
   width: 100%;
-  padding: 12px 14px;
+  padding: 12px 42px 12px 14px;
   font-size: 14px;
   border-radius: 10px;
   border: 1.5px solid #cbd5e1;
-  background: #ffffff;
+  background-color: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  line-height: 1.4;
+  transition: all 0.2s ease;
 
   &:focus {
     outline: none;
     border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
   }
 `;
 
